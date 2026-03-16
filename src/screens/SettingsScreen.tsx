@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Linking } from 'react-native';
-import { Text, TextInput, List, Divider, useTheme } from 'react-native-paper';
+import { Text, TextInput, List, Divider, RadioButton, useTheme } from 'react-native-paper';
 import { useSettings } from '../context/SettingsContext';
 import { useCollection } from '../context/CollectionContext';
+import type { ThemeMode } from '../types';
 
 export default function SettingsScreen() {
   const theme = useTheme();
-  const { settings, updateToken } = useSettings();
+  const { settings, updateToken, updateThemeMode } = useSettings();
   const { albums } = useCollection();
 
   return (
@@ -35,6 +36,20 @@ export default function SettingsScreen() {
             Get a token at discogs.com/settings/developers. Adding a token increases the API rate limit.
           </Text>
         </View>
+      </List.Section>
+
+      <Divider />
+
+      <List.Section>
+        <List.Subheader>Appearance</List.Subheader>
+        <RadioButton.Group
+          value={settings.themeMode}
+          onValueChange={(value) => updateThemeMode(value as ThemeMode)}
+        >
+          <RadioButton.Item label="System default" value="system" />
+          <RadioButton.Item label="Light" value="light" />
+          <RadioButton.Item label="Dark" value="dark" />
+        </RadioButton.Group>
       </List.Section>
 
       <Divider />

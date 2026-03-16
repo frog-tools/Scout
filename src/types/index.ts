@@ -36,6 +36,9 @@ export interface DiscogsSearchResponse {
   results: DiscogsSearchResult[];
 }
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 export interface Settings {
   discogsToken: string;
+  themeMode: ThemeMode;
 }

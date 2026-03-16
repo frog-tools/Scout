@@ -1,17 +1,18 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { Settings } from '../types';
+import type { Settings, ThemeMode } from '../types';
 import { loadSettings, saveSettings } from '../services/storage';
 
 interface SettingsContextValue {
   settings: Settings;
   updateToken: (token: string) => void;
+  updateThemeMode: (mode: ThemeMode) => void;
   isLoading: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>({ discogsToken: '' });
+  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system' });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,8 +30,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const updateThemeMode = useCallback((mode: ThemeMode) => {
+    setSettings((prev) => {
+      const next = { ...prev, themeMode: mode };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
   return (
-    <SettingsContext.Provider value={{ settings, updateToken, isLoading }}>
+    <SettingsContext.Provider value={{ settings, updateToken, updateThemeMode, isLoading }}>
       {children}
     </SettingsContext.Provider>
   );

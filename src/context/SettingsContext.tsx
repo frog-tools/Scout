@@ -6,13 +6,14 @@ interface SettingsContextValue {
   settings: Settings;
   updateToken: (token: string) => void;
   updateThemeMode: (mode: ThemeMode) => void;
+  updateRedApiKey: (key: string) => void;
   isLoading: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system' });
+  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system', redApiKey: '' });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -38,8 +39,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const updateRedApiKey = useCallback((key: string) => {
+    setSettings((prev) => {
+      const next = { ...prev, redApiKey: key };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
   return (
-    <SettingsContext.Provider value={{ settings, updateToken, updateThemeMode, isLoading }}>
+    <SettingsContext.Provider value={{ settings, updateToken, updateThemeMode, updateRedApiKey, isLoading }}>
       {children}
     </SettingsContext.Provider>
   );

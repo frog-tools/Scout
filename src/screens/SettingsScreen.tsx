@@ -7,7 +7,7 @@ import type { ThemeMode } from '../types';
 
 export default function SettingsScreen() {
   const theme = useTheme();
-  const { settings, updateToken, updateThemeMode } = useSettings();
+  const { settings, updateToken, updateThemeMode, updateRedApiKey } = useSettings();
   const { albums } = useCollection();
 
   return (
@@ -34,6 +34,30 @@ export default function SettingsScreen() {
             onPress={() => Linking.openURL('https://www.discogs.com/settings/developers')}
           >
             Get a token at discogs.com/settings/developers. Adding a token increases the API rate limit.
+          </Text>
+        </View>
+      </List.Section>
+
+      <Divider />
+
+      <List.Section>
+        <List.Subheader>RED (Redacted)</List.Subheader>
+        <View style={styles.inputContainer}>
+          <TextInput
+            label="API Key"
+            value={settings.redApiKey}
+            onChangeText={updateRedApiKey}
+            mode="outlined"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            right={<TextInput.Icon icon="key" />}
+          />
+          <Text
+            variant="bodySmall"
+            style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}
+          >
+            Generate an API key for Torrents and Requests in your RED user settings. Enables checking whether editions are uploaded or requested.
           </Text>
         </View>
       </List.Section>

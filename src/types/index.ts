@@ -11,6 +11,7 @@ export interface Album {
   format: string[];
   catalogNumber: string;
   addedAt: number;
+  redStatus?: RedStatus;
 }
 
 export interface DiscogsSearchResult {
@@ -41,4 +42,34 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export interface Settings {
   discogsToken: string;
   themeMode: ThemeMode;
+  redApiKey: string;
+}
+
+// RED (Redacted) types
+
+export interface RedEdition {
+  torrentId: number;
+  format: string;
+  encoding: string;
+  media: string;
+  seeders: number;
+  snatched: number;
+  remasterTitle: string;
+  remasterCatalogueNumber: string;
+}
+
+export interface RedRequest {
+  requestId: number;
+  title: string;
+  year: number;
+  bounty: number;
+  formatList: string;
+}
+
+export interface RedStatus {
+  uploaded: boolean;
+  editions: RedEdition[];
+  requestCount: number;
+  requests: RedRequest[];
+  checkedAt: number;
 }

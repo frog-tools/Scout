@@ -16,7 +16,7 @@ export async function saveCollection(albums: Album[]): Promise<void> {
 
 export async function loadSettings(): Promise<Settings> {
   const json = await AsyncStorage.getItem(SETTINGS_KEY);
-  if (!json) return { discogsToken: '', themeMode: 'system' };
+  if (!json) return { discogsToken: '', themeMode: 'system', redApiKey: '' };
   return JSON.parse(json) as Settings;
 }
 

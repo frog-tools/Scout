@@ -1,13 +1,14 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
-import { Text, Button, Surface, Snackbar, ActivityIndicator, Icon, useTheme } from 'react-native-paper';
+import { Text, Button, Chip, Surface, Snackbar, ActivityIndicator, Icon, useTheme } from 'react-native-paper';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
 import { searchByBarcode, parseArtistTitle } from '../services/discogs';
-import type { Album, DiscogsSearchResult } from '../types';
+import { getRedStatus } from '../services/redacted';
+import type { Album, DiscogsSearchResult, RedStatus } from '../types';
 
 type ScanState = 'idle' | 'looking_up' | 'result' | 'error';
 
@@ -22,6 +23,22 @@ export default function ScanScreen() {
   const [snackbar, setSnackbar] = useState('');
   const scanLockRef = useRef(false);
   const scannedBarcodeRef = useRef('');
+  const [redStatus, setRedStatus] = useState<RedStatus | null>(null);
+  const [redLoading, setRedLoading] = useState(false);
+
+  // Fetch RED status when a Discogs result appears
+  useEffect(() => {
+    if (!result || !settings.redApiKey) {
+      setRedStatus(null);
+      return;
+    }
+    setRedLoading(true);
+    const { artist, title } = parseArtistTitle(result.title);
+    getRedStatus(artist, title, result.catno || '', settings.redApiKey)
+      .then(setRedStatus)
+      .catch(() => setRedStatus(null))
+      .finally(() => setRedLoading(false));
+  }, [result, settings.redApiKey]);
 
   const handleBarcodeScanned = useCallback(
     async ({ data }: BarcodeScanningResult) => {
@@ -83,6 +100,7 @@ export default function ScanScreen() {
       format: result.format || [],
       catalogNumber: result.catno || '',
       addedAt: Date.now(),
+      redStatus: redStatus ?? undefined,
     };
     addAlbum(album);
     setLastAdded(album);
@@ -90,7 +108,7 @@ export default function ScanScreen() {
     setScanState('idle');
     scanLockRef.current = false;
     setSnackbar(`Added "${title}" to collection`);
-  }, [result, addAlbum]);
+  }, [result, redStatus, addAlbum]);
 
   const handleDismiss = useCallback(() => {
     setResult(null);
@@ -159,6 +177,30 @@ export default function ScanScreen() {
               )}
             </View>
           </View>
+          {settings.redApiKey ? (
+            <View style={styles.redStatusRow}>
+              {redLoading ? (
+                <Chip icon="loading" compact>Checking RED...</Chip>
+              ) : redStatus ? (
+                <>
+                  <Chip
+                    icon={redStatus.uploaded ? 'close-circle' : 'party-popper'}
+                    compact
+                    style={redStatus.uploaded ? undefined : styles.chipNotUploaded }
+                  >
+                    {redStatus.uploaded
+                      ? `Already on RED (${redStatus.editions.length} edition${redStatus.editions.length !== 1 ? 's' : ''})`
+                      : 'Not on RED yet!'}
+                  </Chip>
+                  {redStatus.requestCount > 0 && (
+                    <Chip icon="grin-stars" compact>
+                      {redStatus.requestCount} request{redStatus.requestCount !== 1 ? 's' : ''}
+                    </Chip>
+                  )}
+                </>
+              ) : null}
+            </View>
+          ) : null}
           <View style={styles.resultActions}>
             <Button mode="outlined" onPress={handleDismiss}>
               Dismiss
@@ -253,6 +295,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 12,
     marginTop: 12,
+  },
+  redStatusRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  chipNotUploaded: {
+    backgroundColor: '#c8e6c9',
   },
   lastAdded: {
     margin: 16,

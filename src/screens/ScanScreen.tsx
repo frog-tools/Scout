@@ -21,17 +21,19 @@ export default function ScanScreen() {
   const [lastAdded, setLastAdded] = useState<Album | null>(null);
   const [snackbar, setSnackbar] = useState('');
   const scanLockRef = useRef(false);
+  const scannedBarcodeRef = useRef('');
 
   const handleBarcodeScanned = useCallback(
     async ({ data }: BarcodeScanningResult) => {
       if (scanLockRef.current) return;
       scanLockRef.current = true;
+      scannedBarcodeRef.current = data;
       setScanState('looking_up');
 
       try {
         if (hasBarcode(data)) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          setSnackbar('This CD is already in your collection');
+          setSnackbar('This edition is already in your collection');
           setScanState('idle');
           scanLockRef.current = false;
           return;
@@ -71,7 +73,7 @@ export default function ScanScreen() {
     const album: Album = {
       id: Crypto.randomUUID(),
       discogsId: result.id,
-      barcode: '',
+      barcode: scannedBarcodeRef.current,
       title,
       artist,
       year: result.year ? parseInt(result.year, 10) : null,

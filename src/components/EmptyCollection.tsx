@@ -7,13 +7,13 @@ export default function EmptyCollection() {
   return (
     <View style={styles.container}>
       <Text variant="headlineSmall" style={{ color: theme.colors.onSurfaceVariant }}>
-        No CDs yet
+        No releases yet
       </Text>
       <Text
         variant="bodyMedium"
         style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
       >
-        Swipe to the Scan tab to scan your first CD barcode
+        Swipe to the Scan tab to scan your first release!
       </Text>
     </View>
   );

@@ -29,6 +29,7 @@
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {
+    "@types/color": "^4.2.0",
     "@types/react": "~19.1.10",
     "typescript": "~5.9.2"
   },

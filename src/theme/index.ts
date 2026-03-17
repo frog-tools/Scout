@@ -4,8 +4,8 @@ export const lightTheme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#6200ee',
-    secondary: '#03dac6',
+    primary: '#e9236f',
+    secondary: '#dfeaee',
   },
 };
 
@@ -13,7 +13,7 @@ export const darkTheme = {
   ...MD3DarkTheme,
   colors: {
     ...MD3DarkTheme.colors,
-    primary: '#bb86fc',
-    secondary: '#03dac6',
+    primary: '#fc868c',
+    secondary: '#52575c',
   },
 };

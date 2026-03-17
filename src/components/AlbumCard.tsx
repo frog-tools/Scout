@@ -79,10 +79,10 @@ function AlbumCard({
               <Chip
                 icon={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                 compact
-                style={album.redStatus.uploaded ? undefined : styles.chipNotUploaded}
+                style={album.redStatus.uploaded ? undefined : { backgroundColor: theme.colors.secondary }}
                 textStyle={styles.chipText}
               >
-                {album.redStatus.uploaded ? 'Edition already on RED' : 'Can upload'}
+                {album.redStatus.uploaded ? 'Edition already on RED' : 'Uploadable'}
               </Chip>
               {album.redStatus.requests[0] && (
                 <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact textStyle={styles.chipText}>
@@ -218,9 +218,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     marginTop: 4,
-  },
-  chipNotUploaded: {
-    backgroundColor: '#c8e6c9',
   },
   chipText: {
     fontSize: 11,

@@ -6,7 +6,7 @@ type Action =
   | { type: 'SET_ALBUMS'; payload: Album[] }
   | { type: 'ADD_ALBUM'; payload: Album }
   | { type: 'REMOVE_ALBUMS'; payload: string[] }
-  | { type: 'REORDER'; payload: Album[] }
+  | { type: 'REORDER'; payload: { from: number; to: number } }
   | { type: 'UPDATE_ALBUM'; payload: { id: string; changes: Partial<Album> } };
 
 interface CollectionContextValue {
@@ -14,7 +14,7 @@ interface CollectionContextValue {
   isLoading: boolean;
   addAlbum: (album: Album) => void;
   removeAlbums: (ids: string[]) => void;
-  reorder: (albums: Album[]) => void;
+  reorder: (from: number, to: number) => void;
   updateAlbum: (id: string, changes: Partial<Album>) => void;
   hasBarcode: (barcode: string) => boolean;
 }
@@ -31,8 +31,12 @@ function reducer(state: Album[], action: Action): Album[] {
       const ids = new Set(action.payload);
       return state.filter((a) => !ids.has(a.id));
     }
-    case 'REORDER':
-      return action.payload;
+    case 'REORDER': {
+      const result = [...state];
+      const [item] = result.splice(action.payload.from, 1);
+      result.splice(action.payload.to, 0, item);
+      return result;
+    }
     case 'UPDATE_ALBUM':
       return state.map((a) =>
         a.id === action.payload.id ? { ...a, ...action.payload.changes } : a,
@@ -73,8 +77,8 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     dispatch({ type: 'REMOVE_ALBUMS', payload: ids });
   }, []);
 
-  const reorder = useCallback((newAlbums: Album[]) => {
-    dispatch({ type: 'REORDER', payload: newAlbums });
+  const reorder = useCallback((from: number, to: number) => {
+    dispatch({ type: 'REORDER', payload: { from, to } });
   }, []);
 
   const updateAlbum = useCallback((id: string, changes: Partial<Album>) => {

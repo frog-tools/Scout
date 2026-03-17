@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Image, Pressable } from 'react-native';
 import { Text, Chip, Icon, Surface, useTheme } from 'react-native-paper';
+import Sortable from 'react-native-sortables';
 import type { Album } from '../types';
 
 function formatBounty(bytes: number): string {
@@ -11,22 +12,18 @@ function formatBounty(bytes: number): string {
 
 interface Props {
   album: Album;
-  isActive: boolean;
   isSelected: boolean;
   selectionMode: boolean;
   onPress: () => void;
   onLongPress: () => void;
-  onDragHandle?: () => void;
 }
 
 function AlbumCard({
   album,
-  isActive,
   isSelected,
   selectionMode,
   onPress,
   onLongPress,
-  onDragHandle,
 }: Props) {
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
@@ -43,10 +40,9 @@ function AlbumCard({
     <Surface
       style={[
         styles.surface,
-        isActive && { elevation: 4, opacity: 0.9 },
         isSelected && { backgroundColor: theme.colors.secondaryContainer },
       ]}
-      elevation={isActive ? 4 : 1}
+      elevation={1}
     >
       <Pressable
         onPress={handlePress}
@@ -88,7 +84,7 @@ function AlbumCard({
                 {album.redStatus.uploaded ? 'On RED' : 'Not on RED'}
               </Chip>
               {album.redStatus.requestCount > 0 && (
-                <Chip icon="hand-extended" compact textStyle={styles.chipText}>
+                <Chip icon="grin-stars" compact textStyle={styles.chipText}>
                   {album.redStatus.requestCount}
                 </Chip>
               )}
@@ -156,9 +152,11 @@ function AlbumCard({
           )}
         </View>
         {!selectionMode && (
-          <Pressable onPressIn={onDragHandle} hitSlop={8} style={styles.dragHandle}>
-            <Icon source="drag" size={24} color={theme.colors.onSurfaceVariant} />
-          </Pressable>
+          <Sortable.Handle>
+            <View style={styles.dragHandle}>
+              <Icon source="drag" size={24} color={theme.colors.onSurfaceVariant} />
+            </View>
+          </Sortable.Handle>
         )}
       </Pressable>
     </Surface>
@@ -169,7 +167,6 @@ export default React.memo(AlbumCard, (prev, next) => {
   return (
     prev.album.id === next.album.id &&
     prev.album.redStatus === next.album.redStatus &&
-    prev.isActive === next.isActive &&
     prev.isSelected === next.isSelected &&
     prev.selectionMode === next.selectionMode
   );

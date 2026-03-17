@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, BackHandler, View } from 'react-native';
 import { Appbar, Snackbar, useTheme } from 'react-native-paper';
-import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
+import Animated, { useAnimatedRef } from 'react-native-reanimated';
+import Sortable from 'react-native-sortables';
+import type { SortableGridRenderItem } from 'react-native-sortables';
 import * as Haptics from 'expo-haptics';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
@@ -117,16 +119,16 @@ export default function CollectionScreen() {
     setSnackbar(`Updated RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
   }, [albums, selectedIds, settings.redApiKey, updateAlbum]);
 
-  const renderItem = useCallback(
-    ({ item, drag, isActive }: RenderItemParams<Album>) => (
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+
+  const renderItem = useCallback<SortableGridRenderItem<Album>>(
+    ({ item }) => (
       <AlbumCard
         album={item}
-        isActive={isActive}
         isSelected={selectedIds.has(item.id)}
         selectionMode={selectionMode}
         onPress={() => (selectionMode ? toggleSelect(item.id) : undefined)}
         onLongPress={() => !selectionMode && enterSelectionMode(item.id)}
-        onDragHandle={selectionMode ? undefined : drag}
       />
     ),
     [selectionMode, selectedIds, toggleSelect, enterSelectionMode],
@@ -136,16 +138,7 @@ export default function CollectionScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {selectionMode ? (
-        <SelectionToolbar
-          count={selectedIds.size}
-          onDelete={handleDelete}
-          onCancel={exitSelectionMode}
-          onLookupRed={handleLookupRed}
-          redLookupLoading={redLookupLoading}
-          hasRedApiKey={!!settings.redApiKey}
-        />
-      ) : (
+      <View>
         <Appbar.Header style={{ backgroundColor: theme.colors.elevation.level2 }}>
           <Appbar.Content title="Collection" />
           <CollectionMenu
@@ -156,19 +149,46 @@ export default function CollectionScreen() {
             hasAlbums={albums.length > 0}
           />
         </Appbar.Header>
-      )}
+        {selectionMode && (
+          <View style={StyleSheet.absoluteFill}>
+            <SelectionToolbar
+              count={selectedIds.size}
+              onDelete={handleDelete}
+              onCancel={exitSelectionMode}
+              onLookupRed={handleLookupRed}
+              redLookupLoading={redLookupLoading}
+              hasRedApiKey={!!settings.redApiKey}
+            />
+          </View>
+        )}
+      </View>
       {albums.length === 0 ? (
         <EmptyCollection />
       ) : (
-        <DraggableFlatList
-          data={albums}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          onDragEnd={({ data }) => reorder(data)}
-          onDragBegin={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          activationDistance={selectionMode ? 999 : 10}
+        <Animated.ScrollView
+          ref={scrollRef}
+          style={{ backgroundColor: theme.colors.background }}
           contentContainerStyle={styles.list}
-        />
+        >
+          <Sortable.Grid
+            data={albums}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            columns={1}
+            scrollableRef={scrollRef}
+            customHandle
+            dragActivationDelay={0}
+            sortEnabled={!selectionMode}
+            activeItemScale={1}
+            activeItemOpacity={0.9}
+            activeItemShadowOpacity={0.3}
+            inactiveItemOpacity={1}
+            onDragStart={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            onDragEnd={({ fromIndex, toIndex }) => {
+              if (fromIndex !== toIndex) reorder(fromIndex, toIndex);
+            }}
+          />
+        </Animated.ScrollView>
       )}
       <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={2000}>
         {snackbar}

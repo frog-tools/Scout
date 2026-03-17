@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { StyleSheet, BackHandler, View } from 'react-native';
+import { StyleSheet, BackHandler, View, Alert } from 'react-native';
 import { Appbar, Snackbar, useTheme } from 'react-native-paper';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
@@ -67,9 +67,22 @@ export default function CollectionScreen() {
 
   const handleDelete = useCallback(() => {
     const count = selectedIds.size;
-    removeAlbums(Array.from(selectedIds));
-    exitSelectionMode();
-    setSnackbar(`Deleted ${count} item${count > 1 ? 's' : ''}`);
+    Alert.alert(
+      `Delete ${count} item${count > 1 ? 's' : ''}?`,
+      'This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            removeAlbums(Array.from(selectedIds));
+            exitSelectionMode();
+            setSnackbar(`Deleted ${count} item${count > 1 ? 's' : ''}`);
+          },
+        },
+      ],
+    );
   }, [selectedIds, removeAlbums, exitSelectionMode]);
 
   const handleSelectAll = useCallback(() => {

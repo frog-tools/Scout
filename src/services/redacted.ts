@@ -1,6 +1,27 @@
 import type { RedStatus, RedEdition, RedRequest } from '../types';
 
 const BASE_URL = 'https://redacted.sh/ajax.php';
+const RATE_LIMIT = 10;
+const RATE_WINDOW = 10_000; // 10 seconds
+
+const requestTimestamps: number[] = [];
+
+async function rateLimitedFetch(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  const now = Date.now();
+  // Remove timestamps outside the window
+  while (requestTimestamps.length > 0 && requestTimestamps[0]! <= now - RATE_WINDOW) {
+    requestTimestamps.shift();
+  }
+  if (requestTimestamps.length >= RATE_LIMIT) {
+    const waitUntil = requestTimestamps[0]! + RATE_WINDOW;
+    await new Promise((resolve) => setTimeout(resolve, waitUntil - now));
+  }
+  requestTimestamps.push(Date.now());
+  return fetch(url, init);
+}
 
 function headers(apiKey: string): HeadersInit {
   return { Authorization: apiKey };
@@ -52,7 +73,7 @@ async function browseTorrents(
   apiKey: string,
 ): Promise<BrowseResponse['response']['results']> {
   const query = new URLSearchParams({ action: 'browse', ...params });
-  const res = await fetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) });
+  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) });
   if (!res.ok) {
     if (res.status === 429) throw new Error('Rate limited');
     throw new Error(`RED API error: ${res.status}`);
@@ -90,7 +111,7 @@ async function searchRequests(
     show_filled: 'false',
   });
 
-  const res = await fetch(`${BASE_URL}?${params}`, { headers: headers(apiKey) });
+  const res = await rateLimitedFetch(`${BASE_URL}?${params}`, { headers: headers(apiKey) });
   if (!res.ok) {
     if (res.status === 429) throw new Error('Rate limited');
     throw new Error(`RED API error: ${res.status}`);

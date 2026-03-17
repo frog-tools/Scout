@@ -1,19 +1,19 @@
-* get version number from package.json
-* rate limit
-* requests not shown on Collections screen
+* [x] get version number from package.json
+* [ ] rate limit
+* [ ] requests not shown on Collections screen
     * probably logic for "on RED" the wrong way round
     * be clear that an uploaded edition won't have requests
-* clean up display of RED info
-* tighten request filtering -- whitney houston LP
+* [ ] clean up display of RED info
+* [ ]tighten request filtering -- whitney houston LP
     * it's because there's only one field for search and it dumps the album and artist names there. include catalog number too
-* keep "not on RED" chip on expanded items
-* "grin-stars" is not a valid icon name for family "material-community"
-* red colour
-* "Not on RED" text color to dark in dark mode
-* about
+* [ ] keep "not on RED" chip on expanded items
+* [ ] "grin-stars" is not a valid icon name for family "material-community"
+* [ ] red colour
+* [ ] "Not on RED" text color to dark in dark mode
+* [ ] about
     * made with love by froggo
     * report bugs and request features: github
-* frog mode
+* [ ] frog mode
     * on scan of a barcode (user id of froggo?)
     * turn colourscheme green
     * change kebab to tumbling frog

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Text, TextInput, List, Divider, RadioButton, useTheme } from 'react-native-paper';
+import { version as appVersion } from '../../package.json';
 import { useSettings } from '../context/SettingsContext';
 import { useCollection } from '../context/CollectionContext';
 import type { ThemeMode } from '../types';
@@ -82,7 +83,7 @@ export default function SettingsScreen() {
         <List.Subheader>About</List.Subheader>
         <List.Item
           title="Version"
-          description="1.0.0"
+          description={appVersion}
           left={(props) => <List.Icon {...props} icon="information-outline" />}
         />
         <List.Item

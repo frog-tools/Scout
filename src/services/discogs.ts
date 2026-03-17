@@ -1,7 +1,8 @@
 import type { DiscogsSearchResponse, DiscogsSearchResult } from '../types';
+import { version as appVersion } from '../../package.json';
 
 const BASE_URL = 'https://api.discogs.com';
-const USER_AGENT = 'Scout/1.0.0';
+const USER_AGENT = `Scout/${appVersion}`;
 
 function headers(token?: string): HeadersInit {
   const h: HeadersInit = { 'User-Agent': USER_AGENT };

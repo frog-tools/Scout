@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Linking } from 'react-native';
-import { Text, TextInput, List, Divider, RadioButton, useTheme } from 'react-native-paper';
+import { Text, TextInput, List, Divider, RadioButton, Portal, Dialog, Button, useTheme } from 'react-native-paper';
 import { version as appVersion } from '../../package.json';
 import { useSettings } from '../context/SettingsContext';
 import { useCollection } from '../context/CollectionContext';
@@ -10,6 +10,7 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { settings, updateToken, updateThemeMode, updateRedApiKey } = useSettings();
   const { albums } = useCollection();
+  const [aboutVisible, setAboutVisible] = useState(false);
 
   return (
     <ScrollView
@@ -85,6 +86,7 @@ export default function SettingsScreen() {
           title="Version"
           description={appVersion}
           left={(props) => <List.Icon {...props} icon="information-outline" />}
+          onPress={() => setAboutVisible(true)}
         />
         <List.Item
           title="Collection size"
@@ -92,6 +94,37 @@ export default function SettingsScreen() {
           left={(props) => <List.Icon {...props} icon="album" />}
         />
       </List.Section>
+
+      <Portal>
+        <Dialog visible={aboutVisible} onDismiss={() => setAboutVisible(false)}>
+          <Dialog.Icon icon="record-circle-outline" />
+          <Dialog.Title style={styles.dialogTitle}>Scout</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium" style={styles.dialogText}>
+              Version {appVersion}
+            </Text>
+            <Text variant="bodyMedium" style={styles.dialogText}>
+              Made with love by&nbsp;
+              <Text 
+                onPress={() => Linking.openURL('https://redacted.sh/user.php?action=search&search=froggo')}
+                style={{
+                  color: theme.colors.primary
+                }}
+              >froggo</Text>.{'\n\n'}
+              Report bugs (yum!) and request features on&nbsp;
+              <Text 
+                onPress={() => Linking.openURL('https://github.com/frog-tools/Scout')}
+                style={{
+                  color: theme.colors.primary
+                }}
+              >GitHub.</Text>
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setAboutVisible(false)}>Close</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </ScrollView>
   );
 }
@@ -109,5 +142,11 @@ const styles = StyleSheet.create({
   hint: {
     marginTop: 8,
     textDecorationLine: 'underline',
+  },
+  dialogTitle: {
+    textAlign: 'center',
+  },
+  dialogText: {
+    textAlign: 'center',
   },
 });

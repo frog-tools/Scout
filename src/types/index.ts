@@ -47,17 +47,6 @@ export interface Settings {
 
 // RED (Redacted) types
 
-export interface RedEdition {
-  torrentId: number;
-  format: string;
-  encoding: string;
-  media: string;
-  seeders: number;
-  snatched: number;
-  remasterTitle: string;
-  remasterCatalogueNumber: string;
-}
-
 export interface RedRequest {
   requestId: number;
   title: string;
@@ -68,7 +57,7 @@ export interface RedRequest {
 
 export interface RedStatus {
   uploaded: boolean;
-  editions: RedEdition[];
+  otherEditionCount: number;
   requestCount: number;
   requests: RedRequest[];
   checkedAt: number;

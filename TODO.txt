@@ -1,13 +1,15 @@
 * [x] get version number from package.json
-* [ ] rate limit
-* [ ] requests not shown on Collections screen
+* [x] rate limit
+* [x] requests not shown on Collections screen
     * probably logic for "on RED" the wrong way round
     * be clear that an uploaded edition won't have requests
-* [ ] clean up display of RED info
+* [x] clean up display of RED info
+* [x] use more appropriate icons
+* [x] "grin-stars" is not a valid icon name for family "material-community"
+* [x] grab thumbnails from discogs
 * [ ]tighten request filtering -- whitney houston LP
     * it's because there's only one field for search and it dumps the album and artist names there. include catalog number too
-* [ ] keep "not on RED" chip on expanded items
-* [ ] "grin-stars" is not a valid icon name for family "material-community"
+* [x] keep "not on RED" chip on expanded items
 * [ ] red colour
 * [ ] "Not on RED" text color to dark in dark mode
 * [ ] about

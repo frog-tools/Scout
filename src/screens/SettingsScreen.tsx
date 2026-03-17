@@ -58,7 +58,7 @@ export default function SettingsScreen() {
             variant="bodySmall"
             style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}
           >
-            Generate an API key for Torrents and Requests in your RED user settings. Enables checking whether editions are uploaded or requested.
+            Generate an API key for Torrents and Requests in your RED user settings. Enables checking whether scanned releases are already uploaded or requested.
           </Text>
         </View>
       </List.Section>

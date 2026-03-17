@@ -33,7 +33,7 @@ export default function SelectionToolbar({
           icon="magnify"
           compact
         >
-          RED
+          Search on RED
         </Button>
       )}
       <Button mode="text" onPress={onDelete} textColor={theme.colors.error}>

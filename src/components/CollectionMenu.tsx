@@ -127,7 +127,7 @@ export default function CollectionMenu({
               <>
                 <List.Item
                   title="Select items not on RED"
-                  left={(props) => <List.Icon {...props} icon="party-popper" />}
+                  left={(props) => <List.Icon {...props} icon="progress-upload" />}
                   onPress={makeHandler(onSelectNotOnRed)}
                   style={styles.item}
                 />

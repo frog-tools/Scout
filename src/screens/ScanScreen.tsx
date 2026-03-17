@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
 import { Text, Button, Chip, Surface, Snackbar, ActivityIndicator, Icon, useTheme } from 'react-native-paper';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
@@ -184,17 +185,20 @@ export default function ScanScreen() {
               ) : redStatus ? (
                 <>
                   <Chip
-                    icon={redStatus.uploaded ? 'close-circle' : 'party-popper'}
+                    icon={redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                     compact
                     style={redStatus.uploaded ? undefined : styles.chipNotUploaded }
                   >
-                    {redStatus.uploaded
-                      ? `Already on RED (${redStatus.editions.length} edition${redStatus.editions.length !== 1 ? 's' : ''})`
-                      : 'Not on RED yet!'}
+                    {redStatus.uploaded ? 'Edition already on RED' : 'Not uploaded yet!'}
                   </Chip>
-                  {redStatus.requestCount > 0 && (
-                    <Chip icon="grin-stars" compact>
-                      {redStatus.requestCount} request{redStatus.requestCount !== 1 ? 's' : ''}
+                  {redStatus.requests[0] && (
+                    <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact>
+                      Request exists: {redStatus.requests[0].formatList}
+                    </Chip>
+                  )}
+                  {(redStatus.otherEditionCount ?? 0) > 0 && (
+                    <Chip icon="disc" compact>
+                      {redStatus.otherEditionCount} other edition{redStatus.otherEditionCount !== 1 ? 's' : ''}
                     </Chip>
                   )}
                 </>

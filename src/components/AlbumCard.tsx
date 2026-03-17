@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Image, Pressable } from 'react-native';
 import { Text, Chip, Icon, Surface, useTheme } from 'react-native-paper';
+import { FontAwesome6 } from '@expo/vector-icons';
 import Sortable from 'react-native-sortables';
 import type { Album } from '../types';
 
@@ -76,16 +77,16 @@ function AlbumCard({
           {!expanded && album.redStatus && (
             <View style={styles.redBadgeRow}>
               <Chip
-                icon={album.redStatus.uploaded ? 'close-circle' : 'party-popper'}
+                icon={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                 compact
-                style={album.redStatus.uploaded ? undefined : styles.chipNotUploaded }
+                style={album.redStatus.uploaded ? undefined : styles.chipNotUploaded}
                 textStyle={styles.chipText}
               >
-                {album.redStatus.uploaded ? 'On RED' : 'Not on RED'}
+                {album.redStatus.uploaded ? 'Edition already on RED' : 'Can upload'}
               </Chip>
-              {album.redStatus.requestCount > 0 && (
-                <Chip icon="grin-stars" compact textStyle={styles.chipText}>
-                  {album.redStatus.requestCount}
+              {album.redStatus.requests[0] && (
+                <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact textStyle={styles.chipText}>
+                  {album.redStatus.requests[0].formatList} — {formatBounty(album.redStatus.requests[0].bounty)}
                 </Chip>
               )}
             </View>
@@ -118,34 +119,44 @@ function AlbumCard({
               {album.redStatus && (
                 <View style={styles.redSection}>
                   <Text variant="labelMedium" style={{ color: theme.colors.primary, marginTop: 4 }}>
-                    RED Status
+                    This edition
                   </Text>
-                  {album.redStatus.uploaded ? (
-                    album.redStatus.editions.map((e) => (
-                      <Text
-                        key={e.torrentId}
-                        variant="bodySmall"
-                        style={{ color: theme.colors.onSurfaceVariant }}
-                      >
-                        {e.format} {e.encoding} ({e.media})
-                        {e.remasterCatalogueNumber ? ` [${e.remasterCatalogueNumber}]` : ''}
-                        {' '}- {e.seeders} seed{e.seeders !== 1 ? 's' : ''}, {e.snatched} snatch{e.snatched !== 1 ? 'es' : ''}
-                      </Text>
-                    ))
-                  ) : (
-                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Not uploaded
-                    </Text>
-                  )}
-                  {album.redStatus.requests.map((r) => (
+                  <View style={styles.editionRow}>
+                    <Icon
+                      source={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
+                      size={14}
+                      color={album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary}
+                    />
                     <Text
-                      key={r.requestId}
                       variant="bodySmall"
-                      style={{ color: theme.colors.onSurfaceVariant }}
+                      style={{ color: album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary }}
                     >
-                      Request: {r.formatList} - {formatBounty(r.bounty)} bounty
+                      {album.redStatus.uploaded ? 'Already on RED' : 'Not uploaded'}
                     </Text>
-                  ))}
+                  </View>
+                  {album.redStatus.requests[0] && (
+                    <>
+                      <Text variant="labelMedium" style={{ color: theme.colors.primary, marginTop: 6 }}>
+                        Request
+                      </Text>
+                      <View style={styles.editionRow}>
+                        <FontAwesome6 name="sack-dollar" size={12} color={theme.colors.primary} />
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}>
+                          {album.redStatus.requests[0].formatList} — {formatBounty(album.redStatus.requests[0].bounty)} bounty
+                        </Text>
+                      </View>
+                    </>
+                  )}
+                  {(album.redStatus.otherEditionCount ?? 0) > 0 && (
+                    <>
+                      <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 6 }}>
+                        Other editions
+                      </Text>
+                      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                        {album.redStatus.otherEditionCount} other edition{album.redStatus.otherEditionCount !== 1 ? 's' : ''} on RED
+                      </Text>
+                    </>
+                  )}
                 </View>
               )}
             </View>
@@ -216,7 +227,12 @@ const styles = StyleSheet.create({
   },
   redSection: {
     marginTop: 4,
-    gap: 2,
+    gap: 4,
+  },
+  editionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   dragHandle: {
     padding: 8,

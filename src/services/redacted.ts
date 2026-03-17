@@ -1,4 +1,4 @@
-import type { RedStatus, RedEdition, RedRequest } from '../types';
+import type { RedStatus, RedRequest } from '../types';
 
 const BASE_URL = 'https://redacted.sh/ajax.php';
 const RATE_LIMIT = 10;
@@ -132,20 +132,17 @@ export async function getRedStatus(
     searchRequests(artist, title, apiKey).catch(() => []),
   ]);
 
-  const editions: RedEdition[] = [];
+  let uploaded = false;
+  const otherCatalogueNumbers = new Set<string>();
+
   for (const group of torrentResults) {
     for (const t of group.torrents) {
       if (t.media === 'CD') {
-        editions.push({
-          torrentId: t.torrentId,
-          format: t.format,
-          encoding: t.encoding,
-          media: t.media,
-          seeders: t.seeders,
-          snatched: t.snatched,
-          remasterTitle: t.remasterTitle,
-          remasterCatalogueNumber: t.remasterCatalogueNumber,
-        });
+        if (!catalogueNumber || t.remasterCatalogueNumber === catalogueNumber) {
+          uploaded = true;
+        } else {
+          otherCatalogueNumbers.add(t.remasterCatalogueNumber || 'original');
+        }
       }
     }
   }
@@ -161,8 +158,8 @@ export async function getRedStatus(
     }));
 
   return {
-    uploaded: editions.length > 0,
-    editions,
+    uploaded,
+    otherEditionCount: otherCatalogueNumbers.size,
     requestCount: requests.length,
     requests,
     checkedAt: Date.now(),

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Linking } from 'react-native';
+import { View, Image, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Text, TextInput, List, Divider, RadioButton, Portal, Dialog, Button, useTheme } from 'react-native-paper';
 import { version as appVersion } from '../../package.json';
 import { useSettings } from '../context/SettingsContext';
 import { useCollection } from '../context/CollectionContext';
 import type { ThemeMode } from '../types';
+
+const appIcon = require('../../assets/play-store-icon.png');
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -97,7 +99,9 @@ export default function SettingsScreen() {
 
       <Portal>
         <Dialog visible={aboutVisible} onDismiss={() => setAboutVisible(false)}>
-          <Dialog.Icon icon="record-circle-outline" />
+          <View style={styles.dialogIcon}>
+            <Image source={appIcon} style={styles.appIcon} />
+          </View>
           <Dialog.Title style={styles.dialogTitle}>Scout</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium" style={styles.dialogText}>
@@ -145,6 +149,15 @@ const styles = StyleSheet.create({
   },
   dialogTitle: {
     textAlign: 'center',
+  },
+  dialogIcon: {
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  appIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
   },
   dialogText: {
     textAlign: 'center',

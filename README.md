@@ -59,6 +59,27 @@ cd android
 
 The APK will be at `android/app/build/outputs/apk/release/app-release.apk`.
 
+### Building for iOS
+
+Requires macOS with Xcode installed. Generate the native iOS project and build:
+
+```bash
+npx expo prebuild --platform ios --clean
+cd ios
+pod install
+xcodebuild -workspace Scout.xcworkspace -scheme Scout -configuration Release -sdk iphoneos -derivedDataPath build
+```
+
+The `.app` bundle will be at `build/Build/Products/Release-iphoneos/Scout.app`.
+
+To install on a connected device via the command line:
+
+```bash
+xcrun devicectl device install app --device <device-id> build/Build/Products/Release-iphoneos/Scout.app
+```
+
+You can find your device ID with `xcrun devicectl list devices`.
+
 ### Tech stack
 
 - [React Native](https://reactnative.dev/) 0.81 + [Expo](https://expo.dev/) SDK 54

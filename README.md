@@ -90,4 +90,4 @@ You can find your device ID with `xcrun devicectl list devices`.
 
 ## Contributing
 
-Bug reports and feature requests are always welcome! Create them on the project's [issues page](https://github.com/frog-tools/Scout/issues).
+Bug reports and feature requests are always welcome! Create them on the project's [issues page](https://github.com/frog-tools/Scout/issues). Please also feel free to open a [Pull Request](https://github.com/frog-tools/Scout/pulls) with changes.

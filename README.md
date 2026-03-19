@@ -4,7 +4,7 @@
 
 A quick and easy way to manage potential uploads. Scan barcodes to look up physical releases (CDs, vinyls, etc) on Discogs, and check availability and request status on RED.
 
-![Screenshot of the Scout app showing the Collections screen, which lists scanned releases and shows upload and request status on RED](assets/images/screenshot.jpg)
+![Screenshot of the Scout app showing the Collections screen, which lists scanned releases and shows upload and request status on RED](assets/images/screenshot.png)
 
 ## Features
 

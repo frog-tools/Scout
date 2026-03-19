@@ -43,6 +43,7 @@ export interface Settings {
   discogsToken: string;
   themeMode: ThemeMode;
   redApiKey: string;
+  frogMode: boolean;
 }
 
 // RED (Redacted) types

@@ -7,7 +7,7 @@ import { TabView, type Route } from 'react-native-tab-view';
 import { StatusBar } from 'expo-status-bar';
 import { CollectionProvider } from './src/context/CollectionContext';
 import { SettingsProvider, useSettings } from './src/context/SettingsContext';
-import { lightTheme, darkTheme } from './src/theme';
+import { lightTheme, darkTheme, frogLightTheme, frogDarkTheme } from './src/theme';
 import TabBar from './src/components/TabBar';
 import CollectionScreen from './src/screens/CollectionScreen';
 import ScanScreen from './src/screens/ScanScreen';
@@ -41,7 +41,9 @@ function AppContent() {
   const isDark =
     settings.themeMode === 'dark' ||
     (settings.themeMode === 'system' && colorScheme === 'dark');
-  const theme = isDark ? darkTheme : lightTheme;
+  const theme = settings.frogMode
+    ? (isDark ? frogDarkTheme : frogLightTheme)
+    : (isDark ? darkTheme : lightTheme);
 
   return (
     <PaperProvider theme={theme}>

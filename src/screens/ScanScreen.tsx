@@ -16,7 +16,7 @@ type ScanState = 'idle' | 'looking_up' | 'result' | 'error';
 export default function ScanScreen() {
   const theme = useTheme();
   const { addAlbum, hasBarcode } = useCollection();
-  const { settings } = useSettings();
+  const { settings, setFrogMode } = useSettings();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [result, setResult] = useState<DiscogsSearchResult | null>(null);
@@ -46,6 +46,16 @@ export default function ScanScreen() {
       if (scanLockRef.current) return;
       scanLockRef.current = true;
       scannedBarcodeRef.current = data;
+
+      if (data === '682110000004') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setFrogMode(true);
+        setSnackbar('Ribbit! Frog mode activated!');
+        setScanState('idle');
+        scanLockRef.current = false;
+        return;
+      }
+
       setScanState('looking_up');
 
       try {

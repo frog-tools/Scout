@@ -140,11 +140,12 @@ export default function CollectionScreen() {
         album={item}
         isSelected={selectedIds.has(item.id)}
         selectionMode={selectionMode}
+        frogMode={settings.frogMode}
         onPress={() => (selectionMode ? toggleSelect(item.id) : undefined)}
         onLongPress={() => !selectionMode && enterSelectionMode(item.id)}
       />
     ),
-    [selectionMode, selectedIds, toggleSelect, enterSelectionMode],
+    [selectionMode, selectedIds, toggleSelect, enterSelectionMode, settings.frogMode],
   );
 
   const keyExtractor = useCallback((item: Album) => item.id, []);

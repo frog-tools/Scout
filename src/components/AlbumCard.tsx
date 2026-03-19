@@ -1,9 +1,19 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Image, Pressable } from 'react-native';
 import { Text, Chip, Icon, Surface, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
 import Sortable from 'react-native-sortables';
 import type { Album } from '../types';
+
+const frogGifs = [
+  require('../../assets/frogs/frog1.gif'),
+  require('../../assets/frogs/frog2.gif'),
+  require('../../assets/frogs/frog3.gif'),
+  require('../../assets/frogs/frog4.gif'),
+  require('../../assets/frogs/frog5.gif'),
+  require('../../assets/frogs/frog6.gif'),
+  require('../../assets/frogs/frog7.gif'),
+];
 
 function formatBounty(bytes: number): string {
   if (bytes >= 1073741824) return `${(bytes / 1073741824).toFixed(1)} GB`;
@@ -15,6 +25,7 @@ interface Props {
   album: Album;
   isSelected: boolean;
   selectionMode: boolean;
+  frogMode: boolean;
   onPress: () => void;
   onLongPress: () => void;
 }
@@ -23,11 +34,13 @@ function AlbumCard({
   album,
   isSelected,
   selectionMode,
+  frogMode,
   onPress,
   onLongPress,
 }: Props) {
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const frogIndex = useMemo(() => Math.floor(Math.random() * frogGifs.length), []);
 
   const handlePress = useCallback(() => {
     if (selectionMode) {
@@ -60,7 +73,9 @@ function AlbumCard({
             />
           </View>
         )}
-        {album.thumb ? (
+        {frogMode ? (
+          <Image source={frogGifs[frogIndex]} style={styles.thumb} />
+        ) : album.thumb ? (
           <Image source={{ uri: album.thumb }} style={styles.thumb} />
         ) : (
           <View style={[styles.thumb, styles.placeholder, { backgroundColor: theme.colors.surfaceVariant }]}>
@@ -179,7 +194,8 @@ export default React.memo(AlbumCard, (prev, next) => {
     prev.album.id === next.album.id &&
     prev.album.redStatus === next.album.redStatus &&
     prev.isSelected === next.isSelected &&
-    prev.selectionMode === next.selectionMode
+    prev.selectionMode === next.selectionMode &&
+    prev.frogMode === next.frogMode
   );
 });
 

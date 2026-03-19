@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Text, TextInput, List, Divider, RadioButton, Portal, Dialog, Button, useTheme } from 'react-native-paper';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { version as appVersion } from '../../package.json';
 import { useSettings } from '../context/SettingsContext';
 import { useCollection } from '../context/CollectionContext';
@@ -10,7 +11,7 @@ const appIcon = require('../../assets/play-store-icon.png');
 
 export default function SettingsScreen() {
   const theme = useTheme();
-  const { settings, updateToken, updateThemeMode, updateRedApiKey } = useSettings();
+  const { settings, updateToken, updateThemeMode, updateRedApiKey, setFrogMode } = useSettings();
   const { albums } = useCollection();
   const [aboutVisible, setAboutVisible] = useState(false);
 
@@ -81,6 +82,21 @@ export default function SettingsScreen() {
       </List.Section>
 
       <Divider />
+
+      {settings.frogMode && (
+        <>
+          <List.Section>
+            <List.Subheader>Frog Mode</List.Subheader>
+            <List.Item
+              title="Disable frog mode"
+              description="Return to normal theme and album covers"
+              left={(props) => <FontAwesome6 name="frog" size={20} color={props.color} style={{ marginLeft: 16, marginRight: 8 }} />}
+              onPress={() => setFrogMode(false)}
+            />
+          </List.Section>
+          <Divider />
+        </>
+      )}
 
       <List.Section>
         <List.Subheader>About</List.Subheader>

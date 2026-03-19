@@ -7,13 +7,14 @@ interface SettingsContextValue {
   updateToken: (token: string) => void;
   updateThemeMode: (mode: ThemeMode) => void;
   updateRedApiKey: (key: string) => void;
+  setFrogMode: (enabled: boolean) => void;
   isLoading: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system', redApiKey: '' });
+  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system', redApiKey: '', frogMode: false });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,8 +48,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setFrogMode = useCallback((enabled: boolean) => {
+    setSettings((prev) => {
+      const next = { ...prev, frogMode: enabled };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
   return (
-    <SettingsContext.Provider value={{ settings, updateToken, updateThemeMode, updateRedApiKey, isLoading }}>
+    <SettingsContext.Provider value={{ settings, updateToken, updateThemeMode, updateRedApiKey, setFrogMode, isLoading }}>
       {children}
     </SettingsContext.Provider>
   );

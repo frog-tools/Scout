@@ -7,7 +7,7 @@ import type { SortableGridRenderItem } from 'react-native-sortables';
 import * as Haptics from 'expo-haptics';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
-import { getRedStatus } from '../services/redacted';
+import { getRedStatus, discogsFormatToRedMedia } from '../services/redacted';
 import AlbumCard from '../components/AlbumCard';
 import SelectionToolbar from '../components/SelectionToolbar';
 import CollectionMenu from '../components/CollectionMenu';
@@ -120,6 +120,8 @@ export default function CollectionScreen() {
           album.title,
           album.catalogNumber,
           apiKey,
+          discogsFormatToRedMedia(album.format),
+          album.barcode,
         );
         updateAlbum(album.id, { redStatus: status });
         updated++;
@@ -140,12 +142,12 @@ export default function CollectionScreen() {
         album={item}
         isSelected={selectedIds.has(item.id)}
         selectionMode={selectionMode}
-        frogMode={settings.frogMode}
+        frogModeActive={settings.frogModeActive}
         onPress={() => (selectionMode ? toggleSelect(item.id) : undefined)}
         onLongPress={() => !selectionMode && enterSelectionMode(item.id)}
       />
     ),
-    [selectionMode, selectedIds, toggleSelect, enterSelectionMode, settings.frogMode],
+    [selectionMode, selectedIds, toggleSelect, enterSelectionMode, settings.frogModeActive],
   );
 
   const keyExtractor = useCallback((item: Album) => item.id, []);

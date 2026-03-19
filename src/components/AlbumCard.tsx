@@ -25,7 +25,7 @@ interface Props {
   album: Album;
   isSelected: boolean;
   selectionMode: boolean;
-  frogMode: boolean;
+  frogModeActive: boolean;
   onPress: () => void;
   onLongPress: () => void;
 }
@@ -34,7 +34,7 @@ function AlbumCard({
   album,
   isSelected,
   selectionMode,
-  frogMode,
+  frogModeActive,
   onPress,
   onLongPress,
 }: Props) {
@@ -73,7 +73,7 @@ function AlbumCard({
             />
           </View>
         )}
-        {frogMode ? (
+        {frogModeActive ? (
           <Image source={frogGifs[frogIndex]} style={styles.thumb} />
         ) : album.thumb ? (
           <Image source={{ uri: album.thumb }} style={styles.thumb} />
@@ -101,7 +101,7 @@ function AlbumCard({
               </Chip>
               {album.redStatus.requests[0] && (
                 <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact textStyle={styles.chipText}>
-                  {album.redStatus.requests[0].formatList} — {formatBounty(album.redStatus.requests[0].bounty)}
+                  {album.redStatus.requests[0].formatList} - {formatBounty(album.redStatus.requests[0].bounty)}
                 </Chip>
               )}
             </View>
@@ -157,7 +157,7 @@ function AlbumCard({
                       <View style={styles.editionRow}>
                         <FontAwesome6 name="sack-dollar" size={12} color={theme.colors.primary} />
                         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}>
-                          {album.redStatus.requests[0].formatList} — {formatBounty(album.redStatus.requests[0].bounty)} bounty
+                          {album.redStatus.requests[0].formatList} - {formatBounty(album.redStatus.requests[0].bounty)} bounty
                         </Text>
                       </View>
                     </>
@@ -195,7 +195,7 @@ export default React.memo(AlbumCard, (prev, next) => {
     prev.album.redStatus === next.album.redStatus &&
     prev.isSelected === next.isSelected &&
     prev.selectionMode === next.selectionMode &&
-    prev.frogMode === next.frogMode
+    prev.frogModeActive === next.frogModeActive
   );
 });
 

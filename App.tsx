@@ -41,7 +41,7 @@ function AppContent() {
   const isDark =
     settings.themeMode === 'dark' ||
     (settings.themeMode === 'system' && colorScheme === 'dark');
-  const theme = settings.frogMode
+  const theme = settings.frogModeActive
     ? (isDark ? frogDarkTheme : frogLightTheme)
     : (isDark ? darkTheme : lightTheme);
 

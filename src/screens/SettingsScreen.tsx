@@ -83,7 +83,7 @@ export default function SettingsScreen() {
 
       <Divider />
 
-      {settings.frogMode && (
+      {settings.frogModeActive && (
         <>
           <List.Section>
             <List.Subheader>Frog Mode</List.Subheader>
@@ -111,6 +111,7 @@ export default function SettingsScreen() {
           description={`${albums.length} release${albums.length !== 1 ? 's' : ''}`}
           left={(props) => <List.Icon {...props} icon="album" />}
         />
+        />
       </List.Section>
 
       <Portal>
@@ -137,8 +138,9 @@ export default function SettingsScreen() {
                 style={{
                   color: theme.colors.primary
                 }}
-              >GitHub.</Text>
+              >GitHub</Text>.{'\n\n'}
             </Text>
+            <Text variant="bodyMedium" style={styles.dialogText}>{settings.frogModeFound ? "You have found Frog Mode." : "You have not found Frog Mode yet." }</Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setAboutVisible(false)}>Close</Button>

@@ -22,8 +22,8 @@ See the [releases](https://github.com/frog-tools/Scout/releases) page of this pr
 
 In the app's Settings tab:
 
-- **Discogs API** — Add a [personal access token](https://www.discogs.com/settings/developers) to increase the API rate limit
-- **RED API** — Add an API key (generated in your RED user settings, must have Torrents and Requests permissions) to enable upload/request checking
+- **Discogs API** - Add a [personal access token](https://www.discogs.com/settings/developers) to increase the API rate limit
+- **RED API** - Add an API key (generated in your RED user settings, must have Torrents and Requests permissions) to enable upload/request checking
 
 ## Building
 

@@ -79,7 +79,8 @@ async function browseTorrents(
     throw new Error(`RED API error: ${res.status}`);
   }
   const data: BrowseResponse = await res.json();
-  if (data.status !== 'success') throw new Error('RED API returned failure');
+  // Gazelle returns "failure" for no results - treat as empty, not an error
+  if (data.status !== 'success') return [];
   return data.response.results;
 }
 
@@ -88,15 +89,25 @@ async function searchTorrents(
   title: string,
   catalogueNumber: string,
   apiKey: string,
+  barcode: string = '',
 ): Promise<BrowseResponse['response']['results']> {
-  // Try catalogue number first — most precise match for an edition
+  // Try catalogue number first - most precise match for an edition
   if (catalogueNumber) {
-    const results = await browseTorrents({ cataloguenumber: catalogueNumber }, apiKey);
+    const results = await browseTorrents({ remastercataloguenumber: catalogueNumber }, apiKey);
+    if (results.length > 0) return results;
+    // Also try group-level catalogue number field
+    const groupResults = await browseTorrents({ cataloguenumber: catalogueNumber }, apiKey);
+    if (groupResults.length > 0) return groupResults;
+  }
+
+  // Try barcode as catalogue number - uploaders often put barcodes in this field
+  if (barcode && barcode !== catalogueNumber) {
+    const results = await browseTorrents({ remastercataloguenumber: barcode }, apiKey);
     if (results.length > 0) return results;
   }
 
-  // Fall back to general search with artist + title
-  const results = await browseTorrents({ searchstr: `${artist} ${title}` }, apiKey);
+  // Fall back to artist + title as separate fields for better matching
+  const results = await browseTorrents({ artistname: artist, groupname: title }, apiKey);
   return results;
 }
 
@@ -117,8 +128,48 @@ async function searchRequests(
     throw new Error(`RED API error: ${res.status}`);
   }
   const data: RequestsResponse = await res.json();
-  if (data.status !== 'success') throw new Error('RED API returned failure');
+  // Gazelle returns "failure" for no results - treat as empty, not an error
+  if (data.status !== 'success') return [];
   return data.response.results;
+}
+
+// Strip leading zeros, remove separators, and lowercase for comparison
+function normalizeCatNo(s: string): string {
+  return s.replace(/[\s\-_.\/]/g, '').replace(/^0+/, '').toLowerCase();
+}
+
+function catalogueMatches(redCatNo: string, discogsCatNo: string, barcode: string): boolean {
+  if (!redCatNo) return false;
+  const normalizedRed = normalizeCatNo(redCatNo);
+  if (!normalizedRed) return false;
+
+  // Check both directions - RED may contain extra info (barcode appended),
+  // or Discogs may contain extra info (format suffix like "CD")
+  if (discogsCatNo) {
+    const normalizedDiscogs = normalizeCatNo(discogsCatNo);
+    if (normalizedRed.includes(normalizedDiscogs) || normalizedDiscogs.includes(normalizedRed)) return true;
+  }
+  if (barcode) {
+    const normalizedBarcode = normalizeCatNo(barcode);
+    if (normalizedRed.includes(normalizedBarcode) || normalizedBarcode.includes(normalizedRed)) return true;
+  }
+  return false;
+}
+
+// Map Discogs format name to RED media type
+export function discogsFormatToRedMedia(formats: string[]): string | null {
+  const media = formats[0];
+  if (!media) return null;
+  const map: Record<string, string> = {
+    'CD': 'CD',
+    'CDr': 'CD',
+    'Vinyl': 'Vinyl',
+    'Cassette': 'Cassette',
+    'Blu-ray': 'Blu-Ray',
+    'DVD': 'DVD',
+    'SACD': 'SACD',
+  };
+  return map[media] ?? null;
 }
 
 export async function getRedStatus(
@@ -126,10 +177,12 @@ export async function getRedStatus(
   title: string,
   catalogueNumber: string,
   apiKey: string,
+  media: string | null = null,
+  barcode: string = '',
 ): Promise<RedStatus> {
   const [torrentResults, requestResults] = await Promise.all([
-    searchTorrents(artist, title, catalogueNumber, apiKey).catch(() => []),
-    searchRequests(artist, title, apiKey).catch(() => []),
+    searchTorrents(artist, title, catalogueNumber, apiKey, barcode).catch(() => [] as BrowseResponse['response']['results']),
+    searchRequests(artist, title, apiKey).catch(() => [] as RequestsResponse['response']['results']),
   ]);
 
   let uploaded = false;
@@ -137,12 +190,13 @@ export async function getRedStatus(
 
   for (const group of torrentResults) {
     for (const t of group.torrents) {
-      if (t.media === 'CD') {
-        if (!catalogueNumber || t.remasterCatalogueNumber === catalogueNumber) {
-          uploaded = true;
-        } else {
-          otherCatalogueNumbers.add(t.remasterCatalogueNumber || 'original');
-        }
+      if (media && t.media !== media) continue;
+
+      const hasCatNoOrBarcode = catalogueNumber || barcode;
+      if (!hasCatNoOrBarcode || catalogueMatches(t.remasterCatalogueNumber, catalogueNumber, barcode)) {
+        uploaded = true;
+      } else {
+        otherCatalogueNumbers.add(t.remasterCatalogueNumber || 'original');
       }
     }
   }

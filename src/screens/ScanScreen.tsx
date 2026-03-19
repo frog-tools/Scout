@@ -8,7 +8,7 @@ import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
 import { searchByBarcode, parseArtistTitle, fetchReleaseImages } from '../services/discogs';
-import { getRedStatus } from '../services/redacted';
+import { getRedStatus, discogsFormatToRedMedia } from '../services/redacted';
 import type { Album, DiscogsSearchResult, RedStatus } from '../types';
 
 type ScanState = 'idle' | 'looking_up' | 'result' | 'error';
@@ -35,7 +35,8 @@ export default function ScanScreen() {
     }
     setRedLoading(true);
     const { artist, title } = parseArtistTitle(result.title);
-    getRedStatus(artist, title, result.catno || '', settings.redApiKey)
+    const media = discogsFormatToRedMedia(result.format || []);
+    getRedStatus(artist, title, result.catno || '', settings.redApiKey, media, scannedBarcodeRef.current)
       .then(setRedStatus)
       .catch(() => setRedStatus(null))
       .finally(() => setRedLoading(false));

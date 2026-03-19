@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { Settings, ThemeMode } from '../types';
+import type { RedRequest, Settings, ThemeMode } from '../types';
 import { loadSettings, saveSettings } from '../services/storage';
 
 interface SettingsContextValue {
@@ -14,7 +14,7 @@ interface SettingsContextValue {
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system', redApiKey: '', frogMode: false });
+  const [settings, setSettings] = useState<Settings>({ discogsToken: '', themeMode: 'system', redApiKey: '', frogModeActive: false, frogModeFound: false });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const updateToken = useCallback((token: string) => {
     setSettings((prev) => {
-      const next = { ...prev, discogsToken: token };
+      const next = { ...prev, discogsToken: token } as Settings;
       saveSettings(next);
       return next;
     });
@@ -34,7 +34,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const updateThemeMode = useCallback((mode: ThemeMode) => {
     setSettings((prev) => {
-      const next = { ...prev, themeMode: mode };
+      const next = { ...prev, themeMode: mode } as Settings;
       saveSettings(next);
       return next;
     });
@@ -42,7 +42,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const updateRedApiKey = useCallback((key: string) => {
     setSettings((prev) => {
-      const next = { ...prev, redApiKey: key };
+      const next = { ...prev, redApiKey: key } as Settings;
       saveSettings(next);
       return next;
     });
@@ -50,7 +50,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const setFrogMode = useCallback((enabled: boolean) => {
     setSettings((prev) => {
-      const next = { ...prev, frogMode: enabled };
+      const next = { ...prev, frogModeActive: enabled, frogModeFound: true} as Settings;
       saveSettings(next);
       return next;
     });

@@ -1,0 +1,239 @@
+{
+    "releaseTestData": [
+        {
+            "barcode": "4028466116024",
+            "discogs": {
+                "release": "https://www.discogs.com/release/2457614-Legion-Of-The-Damned-Cult-Of-The-Dead"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=522065",
+                        "trumpable": false
+                    },
+                    "320": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=522066",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=522067",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 0
+            }
+        },
+        {
+            "barcode": "078221840514",
+            "discogs": {
+                "release": "https://www.discogs.com/release/578384-Whitney-Houston-Whitney"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC24": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=3555528",
+                        "trumpable": true
+                    }
+                },
+                "other-editions": 7
+            }
+        },
+        {
+            "barcode": "8013744340822",
+            "discogs": {
+                "release": "https://www.discogs.com/release/1008248-Various-100-Rendimento-Compilation-Vol-2"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=6113666",
+                        "trumpable": false
+                    },
+                    "320": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=6113675",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=6113676",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 0
+            }
+        },
+        {
+            "barcode": "6420114111920",
+            "discogs": {
+                "release": "https://www.discogs.com/release/10713514-Varmat-P%C3%A4iv%C3%A4t-Tanssin-Tuulen-Tainnoksiin"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=6113468",
+                        "trumpable": false
+                    },
+                    "320": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=6113619",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=6113620",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 0
+            }
+        },
+        {
+            "barcode": "828765268622",
+            "discogs": {
+                "release": "https://www.discogs.com/release/5132821-Samuli-Edelmann-Enkelten-Tuli"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=5690995",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 0
+            }
+        },
+        {
+            "barcode": "639842379526",
+            "discogs": {
+                "release": "https://www.discogs.com/release/369956-Phil-Collins-Hits"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=953458",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=1246553",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 2
+            }
+        },
+        {
+            "barcode": "828767494821",
+            "discogs": {
+                "release": "https://www.discogs.com/release/8091046-Samuli-Edelmann-Vain-El%C3%A4m%C3%A4%C3%A4-1992-2005"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": false,
+                "request": true,
+                "request-link": "https://redacted.sh/requests.php?action=view&id=366714",
+                "other-editions": 0
+            }
+        },
+        {
+            "barcode": "5099749506527",
+            "discogs": {
+                "release": "https://www.discogs.com/release/1952449-Mariah-Carey-Rainbow"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=931467",
+                        "trumpable": false
+                    },
+                    "320": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=5391553",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=48339",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 3
+            }
+        },
+        {
+            "barcode": "639842988520",
+            "discogs": {
+                "release": "https://www.discogs.com/release/5651347-Hector-Hector-Parhaat"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=3457150",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 0
+            }
+        },
+        {
+            "barcode": "888072635784",
+            "discogs": {
+                "release": "https://www.discogs.com/release/32102211-Soccer-Mommy-Evergreen"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=5152046",
+                        "trumpable": false
+                    },
+                    "320": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=5152048",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=5152047",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 2
+            }
+        },
+        {
+            "barcode": "789397784822",
+            "discogs": {
+                "release": "https://www.discogs.com/release/488693-Patrick-Wolf-Wind-In-The-Wires"
+            },
+            "red": {
+                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=982177",
+                        "trumpable": false
+                    }
+                },
+                "other-editions": 1
+            }
+        }
+    ]
+}

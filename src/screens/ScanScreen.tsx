@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
-import { searchByBarcode, parseArtistTitle } from '../services/discogs';
+import { searchByBarcode, parseArtistTitle, fetchReleaseImages } from '../services/discogs';
 import { getRedStatus } from '../services/redacted';
 import type { Album, DiscogsSearchResult, RedStatus } from '../types';
 
@@ -71,7 +71,13 @@ export default function ScanScreen() {
         }
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setResult(results[0]);
+        const hit = results[0];
+        if (!hit.thumb && !hit.cover_image) {
+          const images = await fetchReleaseImages(hit.id, token);
+          hit.thumb = images.thumb;
+          hit.cover_image = images.coverImage;
+        }
+        setResult(hit);
         setScanState('result');
       } catch {
         setScanState('error');

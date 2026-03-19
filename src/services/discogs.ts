@@ -21,6 +21,21 @@ export async function searchByBarcode(
   return data.results;
 }
 
+export async function fetchReleaseImages(
+  releaseId: number,
+  token?: string,
+): Promise<{ thumb: string; coverImage: string }> {
+  const url = `${BASE_URL}/releases/${releaseId}`;
+  const res = await fetch(url, { headers: headers(token) });
+  if (!res.ok) return { thumb: '', coverImage: '' };
+  const data = await res.json();
+  const primary = data.images?.find((img: { type: string }) => img.type === 'primary') ?? data.images?.[0];
+  return {
+    thumb: primary?.uri150 ?? data.thumb ?? '',
+    coverImage: primary?.uri ?? '',
+  };
+}
+
 export function parseArtistTitle(discogsTitle: string): { artist: string; title: string } {
   const idx = discogsTitle.indexOf(' - ');
   if (idx === -1) return { artist: 'Unknown', title: discogsTitle };

@@ -103,6 +103,8 @@
             },
             "red": {
                 "fetched-at": "2026-03-19T21:43:12+02:00",
+                "uploaded": true,
+                "request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=5690995",
@@ -228,7 +230,7 @@
                 "request": false,
                 "formats": {
                     "FLAC": {
-                        "permalink": "https://redacted.sh/torrents.php?torrentid=982177",
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=5964325",
                         "trumpable": false
                     }
                 },

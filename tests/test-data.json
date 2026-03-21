@@ -3,12 +3,15 @@
         {
             "barcode": "4028466116024",
             "discogs": {
-                "release": "https://www.discogs.com/release/2457614-Legion-Of-The-Damned-Cult-Of-The-Dead"
+                "release": "https://www.discogs.com/release/2457614-Legion-Of-The-Damned-Cult-Of-The-Dead",
+                "results": {
+                    "singular": true
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=522065",
@@ -29,12 +32,22 @@
         {
             "barcode": "078221840514",
             "discogs": {
-                "release": "https://www.discogs.com/release/578384-Whitney-Houston-Whitney"
+                "release": "https://www.discogs.com/release/578384-Whitney-Houston-Whitney",
+                "results": {
+                    "singular": false,
+                    "filters": {
+                        "format": "Vinyl",
+                        "year": "1987",
+                        "label": "Arista",
+                        "region": "Canada",
+                        "identifiers": "A Rev #1"
+                    }
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC24": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=3555528",
@@ -47,12 +60,15 @@
         {
             "barcode": "8013744340822",
             "discogs": {
-                "release": "https://www.discogs.com/release/1008248-Various-100-Rendimento-Compilation-Vol-2"
+                "release": "https://www.discogs.com/release/1008248-Various-100-Rendimento-Compilation-Vol-2",
+                "results": {
+                    "singular": true
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=6113666",
@@ -73,12 +89,15 @@
         {
             "barcode": "6420114111920",
             "discogs": {
-                "release": "https://www.discogs.com/release/10713514-Varmat-P%C3%A4iv%C3%A4t-Tanssin-Tuulen-Tainnoksiin"
+                "release": "https://www.discogs.com/release/10713514-Varmat-P%C3%A4iv%C3%A4t-Tanssin-Tuulen-Tainnoksiin",
+                "results": {
+                    "singular": true
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=6113468",
@@ -99,12 +118,15 @@
         {
             "barcode": "828765268622",
             "discogs": {
-                "release": "https://www.discogs.com/release/5132821-Samuli-Edelmann-Enkelten-Tuli"
+                "release": "https://www.discogs.com/release/5132821-Samuli-Edelmann-Enkelten-Tuli",
+                "results": {
+                    "singular": true
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=5690995",
@@ -117,12 +139,22 @@
         {
             "barcode": "639842379526",
             "discogs": {
-                "release": "https://www.discogs.com/release/369956-Phil-Collins-Hits"
+                "release": "https://www.discogs.com/release/369956-Phil-Collins-Hits",
+                "results": {
+                    "singular": false,
+                    "filters": {
+                        "format": "CD",
+                        "year": "1998",
+                        "label": "Face Value Records",
+                        "region": "Europe",
+                        "identifiers": "398423795-2 08/98"
+                    }
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=953458",
@@ -139,12 +171,15 @@
         {
             "barcode": "828767494821",
             "discogs": {
-                "release": "https://www.discogs.com/release/8091046-Samuli-Edelmann-Vain-El%C3%A4m%C3%A4%C3%A4-1992-2005"
+                "release": "https://www.discogs.com/release/8091046-Samuli-Edelmann-Vain-El%C3%A4m%C3%A4%C3%A4-1992-2005",
+                "results": {
+                    "singular": true
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": false,
-                "request": true,
+                "fillable-request": true,
                 "request-link": "https://redacted.sh/requests.php?action=view&id=366714",
                 "other-editions": 0
             }
@@ -152,12 +187,22 @@
         {
             "barcode": "5099749506527",
             "discogs": {
-                "release": "https://www.discogs.com/release/1952449-Mariah-Carey-Rainbow"
+                "release": "https://www.discogs.com/release/1952449-Mariah-Carey-Rainbow",
+                "results": {
+                    "singular": false,
+                    "filters": {
+                        "format": "CD",
+                        "year": "1999",
+                        "label": "Columbia",
+                        "region": "Europe",
+                        "identifiers": "S4950652000-0101 12 L1"
+                    }
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=931467",
@@ -178,12 +223,21 @@
         {
             "barcode": "639842988520",
             "discogs": {
-                "release": "https://www.discogs.com/release/5651347-Hector-Hector-Parhaat"
+                "release": "https://www.discogs.com/release/5651347-Hector-Hector-Parhaat",
+                "results": {
+                    "singular": false,
+                    "filters": {
+                        "format": "CD",
+                        "year": "1999",
+                        "label": "Scandia",
+                        "region": "Finland"
+                    }
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=3457150",
@@ -196,12 +250,22 @@
         {
             "barcode": "888072635784",
             "discogs": {
-                "release": "https://www.discogs.com/release/32102211-Soccer-Mommy-Evergreen"
+                "release": "https://www.discogs.com/release/32102211-Soccer-Mommy-Evergreen",
+                "results": {
+                    "singular": false,
+                    "filters": {
+                        "format": "CD",
+                        "year": "2024",
+                        "label": "Loma Vista",
+                        "region": "Europe",
+                        "identifiers": "A0103496731-0101"
+                    }
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=5152046",
@@ -222,12 +286,15 @@
         {
             "barcode": "789397784822",
             "discogs": {
-                "release": "https://www.discogs.com/release/488693-Patrick-Wolf-Wind-In-The-Wires"
+                "release": "https://www.discogs.com/release/488693-Patrick-Wolf-Wind-In-The-Wires",
+                "results": {
+                    "singular": true
+                }
             },
             "red": {
-                "fetched-at": "2026-03-19T21:43:12+02:00",
+                "fetched-at": "2026-03-21T00:00:00+02:00",
                 "uploaded": true,
-                "request": false,
+                "fillable-request": false,
                 "formats": {
                     "FLAC": {
                         "permalink": "https://redacted.sh/torrents.php?torrentid=5964325",

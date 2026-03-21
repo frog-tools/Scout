@@ -111,7 +111,6 @@ export default function SettingsScreen() {
           description={`${albums.length} release${albums.length !== 1 ? 's' : ''}`}
           left={(props) => <List.Icon {...props} icon="album" />}
         />
-        />
       </List.Section>
 
       <Portal>

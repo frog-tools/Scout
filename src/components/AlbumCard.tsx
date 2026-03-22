@@ -46,6 +46,7 @@ function AlbumCard({
 }: Props) {
   const theme = useTheme();
   const frogIndex = useMemo(() => Math.floor(Math.random() * frogGifs.length), []);
+  const isUnofficial = album.format.some((f) => f.toLowerCase().includes('unofficial'));
 
   const handlePress = useCallback(() => {
     if (selectionMode) {
@@ -94,6 +95,13 @@ function AlbumCard({
           <Text variant="bodyMedium" numberOfLines={1} style={{ color: theme.colors.onSurfaceVariant }}>
             {album.artist}
           </Text>
+          {!expanded && isUnofficial && (
+            <View style={styles.redBadgeRow}>
+              <Chip icon="alert" compact style={{ backgroundColor: theme.dark ? '#5C2900' : '#FFE0B2' }} textStyle={styles.chipText}>
+                Unofficial
+              </Chip>
+            </View>
+          )}
           {!expanded && redSearching && (
             <View style={styles.redBadgeRow}>
               <Chip icon={({ size }) => <ActivityIndicator size={size} />} compact textStyle={styles.chipText}>
@@ -112,7 +120,7 @@ function AlbumCard({
                 {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
               </Chip>
               {album.redStatus.trumpable && (
-                <Chip icon="chevron-double-up" compact style={styles.chipTrumpable} textStyle={styles.chipText}>
+                <Chip icon="chevron-double-up" compact style={{ backgroundColor: theme.dark ? '#4A3800' : '#FFF9C4' }} textStyle={styles.chipText}>
                   Trumpable
                 </Chip>
               )}
@@ -152,6 +160,22 @@ function AlbumCard({
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                 Barcode: {album.barcode}
               </Text>
+              {isUnofficial && (
+                <View style={styles.editionRow}>
+                  <Icon source="alert" size={14} color="#E65100" />
+                  <Text variant="bodySmall" style={{ color: '#E65100' }}>
+                    Unofficial release (see rule{' '}
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}
+                      onPress={() => Linking.openURL('https://redacted.sh/rules.php?p=upload#r2.1.16.3')}
+                    >
+                      2.1.16.3
+                    </Text>
+                    )
+                  </Text>
+                </View>
+              )}
               {album.redStatus && (
                 <View style={styles.redSection}>
                   <Text variant="labelMedium" style={{ color: theme.colors.primary, marginTop: 4 }}>
@@ -168,12 +192,12 @@ function AlbumCard({
                     <Icon
                       source={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                       size={14}
-                      color={album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary}
+                      color={album.redStatus.uploaded && !album.redStatus.matchedGroupId ? theme.colors.onSurfaceVariant : theme.colors.primary}
                     />
                     <Text
                       variant="bodySmall"
                       style={{
-                        color: album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary,
+                        color: album.redStatus.uploaded && !album.redStatus.matchedGroupId ? theme.colors.onSurfaceVariant : theme.colors.primary,
                         textDecorationLine: album.redStatus.matchedGroupId ? 'underline' : 'none',
                       }}
                     >
@@ -281,9 +305,6 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 11,
-  },
-  chipTrumpable: {
-    backgroundColor: '#FFF9C4',
   },
   redSection: {
     marginTop: 4,

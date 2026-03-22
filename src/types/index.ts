@@ -172,6 +172,7 @@ export interface RedStatus {
   requests: RedRequest[];
   checkedAt: number;
   matchedGroupId?: number;
+  matchedTorrentId?: number;
 }
 
 // -- Settings and Theme ---------------------------------------------

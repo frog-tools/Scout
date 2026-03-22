@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, StyleSheet, Image, Pressable } from 'react-native';
+import { View, StyleSheet, Image, Pressable, Linking } from 'react-native';
 import { Text, Chip, Icon, ActivityIndicator, Surface, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
 import Sortable from 'react-native-sortables';
@@ -138,7 +138,11 @@ function AlbumCard({
                 </Text>
               )}
               {album.catalogNumber !== '' && (
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}
+                  onPress={() => Linking.openURL(`https://www.discogs.com/release/${album.discogsId}`)}
+                >
                   Catalog #: {album.catalogNumber}
                 </Text>
               )}
@@ -150,7 +154,14 @@ function AlbumCard({
                   <Text variant="labelMedium" style={{ color: theme.colors.primary, marginTop: 4 }}>
                     This edition
                   </Text>
-                  <View style={styles.editionRow}>
+                  <Pressable
+                    style={styles.editionRow}
+                    onPress={album.redStatus.matchedGroupId ? () => Linking.openURL(
+                      album.redStatus!.matchedTorrentId
+                        ? `https://redacted.sh/torrents.php?id=${album.redStatus!.matchedGroupId}&torrentid=${album.redStatus!.matchedTorrentId}`
+                        : `https://redacted.sh/torrents.php?id=${album.redStatus!.matchedGroupId}`
+                    ) : undefined}
+                  >
                     <Icon
                       source={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                       size={14}
@@ -158,11 +169,14 @@ function AlbumCard({
                     />
                     <Text
                       variant="bodySmall"
-                      style={{ color: album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary }}
+                      style={{
+                        color: album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary,
+                        textDecorationLine: album.redStatus.matchedGroupId ? 'underline' : 'none',
+                      }}
                     >
                       {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
                     </Text>
-                  </View>
+                  </Pressable>
                   {album.redStatus.trumpable && (
                     <View style={styles.editionRow}>
                       <Icon source="chevron-double-up" size={14} color="#9C7C00" />
@@ -176,12 +190,15 @@ function AlbumCard({
                       <Text variant="labelMedium" style={{ color: theme.colors.primary, marginTop: 6 }}>
                         Request
                       </Text>
-                      <View style={styles.editionRow}>
+                      <Pressable
+                        style={styles.editionRow}
+                        onPress={() => Linking.openURL(`https://redacted.sh/requests.php?action=view&id=${album.redStatus!.requests[0]!.requestId}`)}
+                      >
                         <FontAwesome6 name="sack-dollar" size={12} color={theme.colors.primary} />
-                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, flex: 1 }}>
+                        <Text variant="bodySmall" style={{ color: theme.colors.primary, flex: 1, textDecorationLine: 'underline' }}>
                           {album.redStatus.requests[0].formatList} - {formatBounty(album.redStatus.requests[0].bounty)} bounty
                         </Text>
-                      </View>
+                      </Pressable>
                     </>
                   )}
                   {(album.redStatus.otherEditionCount ?? 0) > 0 && (

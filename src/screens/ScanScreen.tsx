@@ -7,9 +7,9 @@ import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
-import { searchByBarcode, parseArtistTitle, fetchReleaseImages } from '../services/discogs';
-import { getRedStatus, discogsFormatToRedMedia } from '../services/redacted';
-import type { Album, DiscogsSearchResult, RedStatus } from '../types';
+import { searchByBarcode, parseArtistTitle, fetchReleaseDetail } from '../services/discogs';
+import { getRedStatus } from '../services/redacted';
+import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from '../types';
 
 type ScanState = 'idle' | 'looking_up' | 'result' | 'error';
 
@@ -26,21 +26,22 @@ export default function ScanScreen() {
   const scannedBarcodeRef = useRef('');
   const [redStatus, setRedStatus] = useState<RedStatus | null>(null);
   const [redLoading, setRedLoading] = useState(false);
+  const [releaseDetail, setReleaseDetail] = useState<DiscogsReleaseDetail | null>(null);
 
-  // Fetch RED status when a Discogs result appears
+  // Fetch RED status when release detail is available
   useEffect(() => {
-    if (!result || !settings.redApiKey) {
+    if (!releaseDetail || !settings.redApiKey) {
       setRedStatus(null);
       return;
     }
+    let cancelled = false;
     setRedLoading(true);
-    const { artist, title } = parseArtistTitle(result.title);
-    const media = discogsFormatToRedMedia(result.format || []);
-    getRedStatus(artist, title, result.catno || '', settings.redApiKey, media, scannedBarcodeRef.current)
-      .then(setRedStatus)
-      .catch(() => setRedStatus(null))
-      .finally(() => setRedLoading(false));
-  }, [result, settings.redApiKey]);
+    getRedStatus(releaseDetail, settings.redApiKey)
+      .then((status) => { if (!cancelled) setRedStatus(status); })
+      .catch(() => { if (!cancelled) setRedStatus(null); })
+      .finally(() => { if (!cancelled) setRedLoading(false); });
+    return () => { cancelled = true; };
+  }, [releaseDetail, settings.redApiKey]);
 
   const handleBarcodeScanned = useCallback(
     async ({ data }: BarcodeScanningResult) => {
@@ -70,8 +71,9 @@ export default function ScanScreen() {
 
         const token = settings.discogsToken || undefined;
         const results = await searchByBarcode(data, token);
+        const releases = results.filter((r) => r.type === 'release');
 
-        if (results.length === 0) {
+        if (releases.length === 0) {
           setScanState('error');
           setSnackbar('No results found for this barcode');
           setTimeout(() => {
@@ -82,13 +84,39 @@ export default function ScanScreen() {
         }
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const hit = results[0];
-        if (!hit.thumb && !hit.cover_image) {
-          const images = await fetchReleaseImages(hit.id, token);
-          hit.thumb = images.thumb;
-          hit.cover_image = images.coverImage;
+
+        // Steps 2–4: Find first valid release (non-404) and fetch detail
+        let hit: DiscogsSearchResult | null = null;
+        let detail: DiscogsReleaseDetail | null = null;
+        for (const r of releases) {
+          const d = await fetchReleaseDetail(r.id, token);
+          if (d) {
+            hit = r;
+            detail = d;
+            detail.barcode = data;
+            break;
+          }
         }
+
+        if (!hit || !detail) {
+          setScanState('error');
+          setSnackbar('Release details unavailable');
+          setTimeout(() => {
+            scanLockRef.current = false;
+            setScanState('idle');
+          }, 2000);
+          return;
+        }
+
+        // Use images from detail if search result lacks them
+        if (!hit.thumb && !hit.cover_image && detail.images?.length) {
+          const primary = detail.images.find((img) => img.type === 'primary') ?? detail.images[0];
+          hit.thumb = primary?.uri150 ?? '';
+          hit.cover_image = primary?.uri ?? '';
+        }
+
         setResult(hit);
+        setReleaseDetail(detail);
         setScanState('result');
       } catch {
         setScanState('error');
@@ -104,32 +132,37 @@ export default function ScanScreen() {
 
   const handleAdd = useCallback(() => {
     if (!result) return;
-    const { artist, title } = parseArtistTitle(result.title);
+    const { artist, title } = releaseDetail
+      ? { artist: releaseDetail.artistDisplay, title: releaseDetail.title }
+      : parseArtistTitle(result.title);
     const album: Album = {
       id: Crypto.randomUUID(),
-      discogsId: result.id,
+      discogsId: releaseDetail?.id ?? result.id,
       barcode: scannedBarcodeRef.current,
       title,
       artist,
-      year: result.year ? parseInt(result.year, 10) : null,
+      year: releaseDetail?.year ?? (result.year ? parseInt(result.year, 10) : null),
       thumb: result.thumb,
       coverImage: result.cover_image,
       genre: result.genre || [],
       format: result.format || [],
-      catalogNumber: result.catno || '',
+      catalogNumber: releaseDetail?.labels[0]?.catno ?? result.catno ?? '',
+      country: releaseDetail?.country,
       addedAt: Date.now(),
       redStatus: redStatus ?? undefined,
     };
     addAlbum(album);
     setLastAdded(album);
     setResult(null);
+    setReleaseDetail(null);
     setScanState('idle');
     scanLockRef.current = false;
     setSnackbar(`Added "${title}" to collection`);
-  }, [result, redStatus, addAlbum]);
+  }, [result, releaseDetail, redStatus, addAlbum]);
 
   const handleDismiss = useCallback(() => {
     setResult(null);
+    setReleaseDetail(null);
     setScanState('idle');
     scanLockRef.current = false;
   }, []);
@@ -204,9 +237,9 @@ export default function ScanScreen() {
                   <Chip
                     icon={redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                     compact
-                    style={redStatus.uploaded ? undefined : styles.chipNotUploaded }
+                    style={redStatus.uploaded ? undefined : styles.chipNotUploaded}
                   >
-                    {redStatus.uploaded ? 'Edition already on RED' : 'Not uploaded yet!'}
+                    {redStatus.uploaded ? 'Already on RED' : 'Not uploaded yet!'}
                   </Chip>
                   {redStatus.requests[0] && (
                     <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact>

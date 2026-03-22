@@ -7,7 +7,14 @@ const SETTINGS_KEY = 'scout_settings';
 export async function loadCollection(): Promise<Album[]> {
   const json = await AsyncStorage.getItem(COLLECTION_KEY);
   if (!json) return [];
-  return JSON.parse(json) as Album[];
+  const albums = JSON.parse(json) as Album[];
+  // Migrate old RedStatus objects that lack the 'result' field
+  for (const album of albums) {
+    if (album.redStatus && !album.redStatus.result) {
+      album.redStatus.result = album.redStatus.uploaded ? 'uploaded' : 'not_uploaded';
+    }
+  }
+  return albums;
 }
 
 export async function saveCollection(albums: Album[]): Promise<void> {

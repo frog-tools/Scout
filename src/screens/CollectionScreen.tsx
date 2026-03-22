@@ -7,7 +7,8 @@ import type { SortableGridRenderItem } from 'react-native-sortables';
 import * as Haptics from 'expo-haptics';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
-import { getRedStatus, discogsFormatToRedMedia } from '../services/redacted';
+import { getRedStatus } from '../services/redacted';
+import { fetchReleaseDetail } from '../services/discogs';
 import AlbumCard from '../components/AlbumCard';
 import SelectionToolbar from '../components/SelectionToolbar';
 import CollectionMenu from '../components/CollectionMenu';
@@ -105,6 +106,7 @@ export default function CollectionScreen() {
 
   const handleLookupRed = useCallback(async () => {
     const apiKey = settings.redApiKey;
+    const token = settings.discogsToken || undefined;
     if (!apiKey) return;
 
     const selected = albums.filter((a) => selectedIds.has(a.id));
@@ -115,14 +117,13 @@ export default function CollectionScreen() {
 
     for (const album of selected) {
       try {
-        const status = await getRedStatus(
-          album.artist,
-          album.title,
-          album.catalogNumber,
-          apiKey,
-          discogsFormatToRedMedia(album.format),
-          album.barcode,
-        );
+        const detail = await fetchReleaseDetail(album.discogsId, token);
+        if (!detail) continue;
+        detail.barcode = album.barcode;
+        if (!detail.artistDisplay || detail.artistDisplay === 'Unknown') {
+          detail.artistDisplay = album.artist;
+        }
+        const status = await getRedStatus(detail, apiKey);
         updateAlbum(album.id, { redStatus: status });
         updated++;
       } catch {
@@ -132,7 +133,7 @@ export default function CollectionScreen() {
 
     setRedLookupLoading(false);
     setSnackbar(`Updated RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
-  }, [albums, selectedIds, settings.redApiKey, updateAlbum]);
+  }, [albums, selectedIds, settings.redApiKey, settings.discogsToken, updateAlbum]);
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 

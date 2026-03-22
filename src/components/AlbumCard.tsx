@@ -97,7 +97,7 @@ function AlbumCard({
                 style={album.redStatus.uploaded ? undefined : { backgroundColor: theme.colors.secondary }}
                 textStyle={styles.chipText}
               >
-                {album.redStatus.uploaded ? 'Edition already on RED' : 'Uploadable'}
+                {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
               </Chip>
               {album.redStatus.requests[0] && (
                 <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact textStyle={styles.chipText}>
@@ -146,7 +146,7 @@ function AlbumCard({
                       variant="bodySmall"
                       style={{ color: album.redStatus.uploaded ? theme.colors.onSurfaceVariant : theme.colors.primary }}
                     >
-                      {album.redStatus.uploaded ? 'Already on RED' : 'Not uploaded'}
+                      {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
                     </Text>
                   </View>
                   {album.redStatus.requests[0] && (

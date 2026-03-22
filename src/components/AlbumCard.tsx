@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, StyleSheet, Image, Pressable, Linking } from 'react-native';
 import { Text, Chip, Icon, ActivityIndicator, Surface, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -23,34 +23,37 @@ function formatBounty(bytes: number): string {
 
 interface Props {
   album: Album;
+  expanded: boolean;
   isSelected: boolean;
   selectionMode: boolean;
   frogModeActive: boolean;
   redSearching?: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  onToggleExpand: () => void;
 }
 
 function AlbumCard({
   album,
+  expanded,
   isSelected,
   selectionMode,
   frogModeActive,
   redSearching,
   onPress,
   onLongPress,
+  onToggleExpand,
 }: Props) {
   const theme = useTheme();
-  const [expanded, setExpanded] = useState(false);
   const frogIndex = useMemo(() => Math.floor(Math.random() * frogGifs.length), []);
 
   const handlePress = useCallback(() => {
     if (selectionMode) {
       onPress();
     } else {
-      setExpanded((prev) => !prev);
+      onToggleExpand();
     }
-  }, [selectionMode, onPress]);
+  }, [selectionMode, onPress, onToggleExpand]);
 
   return (
     <Surface
@@ -232,6 +235,7 @@ export default React.memo(AlbumCard, (prev, next) => {
   return (
     prev.album.id === next.album.id &&
     prev.album.redStatus === next.album.redStatus &&
+    prev.expanded === next.expanded &&
     prev.isSelected === next.isSelected &&
     prev.selectionMode === next.selectionMode &&
     prev.frogModeActive === next.frogModeActive &&

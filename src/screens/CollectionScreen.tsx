@@ -23,6 +23,7 @@ export default function CollectionScreen() {
   const [snackbar, setSnackbar] = useState('');
   const [redLookupLoading, setRedLookupLoading] = useState(false);
   const [redSearchingIds, setRedSearchingIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const theme = useTheme();
 
   const exitSelectionMode = useCallback(() => {
@@ -38,6 +39,18 @@ export default function CollectionScreen() {
     });
     return () => sub.remove();
   }, [selectionMode, exitSelectionMode]);
+
+  useEffect(() => {
+    if (selectionMode) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (expandedIds.size > 0) {
+        setExpandedIds(new Set());
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [selectionMode, expandedIds]);
 
   const enterSelectionWithIds = useCallback((ids: string[]) => {
     if (ids.length === 0) return false;
@@ -145,19 +158,30 @@ export default function CollectionScreen() {
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const renderItem = useCallback<SortableGridRenderItem<Album>>(
     ({ item }) => (
       <AlbumCard
         album={item}
+        expanded={expandedIds.has(item.id)}
         isSelected={selectedIds.has(item.id)}
         selectionMode={selectionMode}
         frogModeActive={settings.frogModeActive}
         redSearching={redSearchingIds.has(item.id)}
         onPress={() => (selectionMode ? toggleSelect(item.id) : undefined)}
         onLongPress={() => !selectionMode && enterSelectionMode(item.id)}
+        onToggleExpand={() => toggleExpand(item.id)}
       />
     ),
-    [selectionMode, selectedIds, toggleSelect, enterSelectionMode, settings.frogModeActive, redSearchingIds],
+    [selectionMode, selectedIds, expandedIds, toggleSelect, toggleExpand, enterSelectionMode, settings.frogModeActive, redSearchingIds],
   );
 
   const keyExtractor = useCallback((item: Album) => item.id, []);

@@ -16,7 +16,7 @@ function headers(token?: string): HeadersInit {
   return h;
 }
 
-// ── Existing functions ─────────────────────────────────────────────
+// -- Existing functions ---------------------------------------------
 
 export async function searchByBarcode(
   barcode: string,
@@ -63,7 +63,7 @@ export function stripDiscogsDisambiguator(name: string): string {
   return name.replace(/\s*\(\d+\)$/, '');
 }
 
-// ── New functions ──────────────────────────────────────────────────
+// -- New functions --------------------------------------------------
 
 /**
  * Fetch full release details from Discogs.
@@ -86,7 +86,10 @@ export async function fetchReleaseDetail(
     year: data.year ?? null,
     country: data.country ?? '',
     formats: data.formats ?? [],
-    labels: data.labels ?? [],
+    labels: (data.labels ?? []).map((l: { name: string; catno: string }) => ({
+      ...l,
+      name: stripDiscogsDisambiguator(l.name),
+    })),
     identifiers: data.identifiers ?? [],
     tracklist: data.tracklist ?? [],
     artists: data.artists ?? [],
@@ -97,8 +100,9 @@ export async function fetchReleaseDetail(
 }
 
 /**
- * Step 2: Filter search results — remove non-release types and 404s.
+ * Step 2: Filter search results - remove non-release types and 404s.
  * Returns a cache map of release ID → detail for valid results.
+ * Fetches details in parallel with bounded concurrency.
  */
 export async function filterValidReleases(
   results: DiscogsSearchResult[],
@@ -107,14 +111,24 @@ export async function filterValidReleases(
   valid: DiscogsSearchResult[];
   detailCache: Map<number, DiscogsReleaseDetail>;
 }> {
-  // Remove non-release types
   const releases = results.filter((r) => r.type === 'release');
-
-  const valid: DiscogsSearchResult[] = [];
   const detailCache = new Map<number, DiscogsReleaseDetail>();
 
-  for (const r of releases) {
-    const detail = await fetchReleaseDetail(r.id, token);
+  // Fetch details in parallel, up to CONCURRENCY at a time
+  const CONCURRENCY = token ? 8 : 4;
+  const entries: (readonly [DiscogsSearchResult, DiscogsReleaseDetail | null])[] = [];
+  for (let i = 0; i < releases.length; i += CONCURRENCY) {
+    const batch = releases.slice(i, i + CONCURRENCY);
+    const details = await Promise.all(
+      batch.map((r) => fetchReleaseDetail(r.id, token).catch(() => null)),
+    );
+    for (let j = 0; j < batch.length; j++) {
+      entries.push([batch[j]!, details[j]!] as const);
+    }
+  }
+
+  const valid: DiscogsSearchResult[] = [];
+  for (const [r, detail] of entries) {
     if (detail) {
       valid.push(r);
       detailCache.set(r.id, detail);

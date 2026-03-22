@@ -10,13 +10,13 @@ import type {
 } from '../types';
 import { parseDuration, filterAudioTracks } from './discogs';
 
-// ── Constants ──────────────────────────────────────────────────────
+// -- Constants ------------------------------------------------------
 
 const BASE_URL = 'https://redacted.sh/ajax.php';
 const RATE_LIMIT = 10;
 const RATE_WINDOW = 10_000;
 
-// ── Rate limiter (sliding window) ──────────────────────────────────
+// -- Rate limiter (sliding window) ----------------------------------
 
 const requestTimestamps: number[] = [];
 
@@ -40,7 +40,7 @@ function headers(apiKey: string): HeadersInit {
   return { Authorization: apiKey };
 }
 
-// ── API layer ──────────────────────────────────────────────────────
+// -- API layer ------------------------------------------------------
 
 interface ArtistResponse {
   status: string;
@@ -155,7 +155,7 @@ async function searchRequests(
   return data.response.results;
 }
 
-// ── Normalization utilities ────────────────────────────────────────
+// -- Normalization utilities ----------------------------------------
 
 /** Strip separators, leading zeros, and lowercase for catalogue number comparison. */
 export function normalizeCatNo(s: string): string {
@@ -230,7 +230,7 @@ export function isVariousArtists(artist: string): boolean {
   return lower === 'various' || lower === 'various artists' || lower === 'va';
 }
 
-// ── Candidate type for matching pipeline ───────────────────────────
+// -- Candidate type for matching pipeline ---------------------------
 
 interface TorrentCandidate {
   torrentId: number;
@@ -249,7 +249,7 @@ interface TorrentCandidate {
   description: string;
 }
 
-// ── Step 6: Filter by release type ─────────────────────────────────
+// -- Step 6: Filter by release type ---------------------------------
 
 function filterByReleaseType(
   groups: RedArtistTorrentGroup[],
@@ -274,7 +274,7 @@ function filterByReleaseType(
   return matched.length > 0 ? matched : musicGroups;
 }
 
-// ── Step 7: Title matching ─────────────────────────────────────────
+// -- Step 7: Title matching -----------------------------------------
 
 function matchByTitle(
   groups: RedArtistTorrentGroup[],
@@ -294,7 +294,7 @@ function matchByTitle(
   return contains;
 }
 
-// ── Steps 8–9: Successive narrowing ────────────────────────────────
+// -- Steps 8–9: Successive narrowing --------------------------------
 
 function filterByMedia(
   candidates: TorrentCandidate[],
@@ -423,7 +423,7 @@ function narrowCandidates(
   return { result: 'multiple', candidates: current };
 }
 
-// ── Steps 10–11: Track matching ────────────────────────────────────
+// -- Steps 10–11: Track matching ------------------------------------
 
 /** Parse RED torrent fileList into audio file names. */
 function parseRedFileList(fileList: string): string[] {
@@ -600,7 +600,7 @@ function torrentToCandidate(torrent: RedGroupTorrent, group: RedGroupDetail): To
   };
 }
 
-// ── Edition counting ───────────────────────────────────────────────
+// -- Edition counting -----------------------------------------------
 
 function countOtherEditions(
   matched: TorrentCandidate,
@@ -617,7 +617,7 @@ function countOtherEditions(
   return otherKeys.size;
 }
 
-// ── Request matching ───────────────────────────────────────────────
+// -- Request matching -----------------------------------------------
 
 function matchRequests(
   results: RequestsResponse['response']['results'],
@@ -645,7 +645,7 @@ async function fetchRequestsForGroup(
   return matchRequests(results, groupId);
 }
 
-// ── Main orchestrator (steps 5–11) ─────────────────────────────────
+// -- Main orchestrator (steps 5–11) ---------------------------------
 
 function makeResult(
   result: RedMatchResult,
@@ -702,7 +702,7 @@ export async function getRedStatus(
       const artistData = await fetchArtist(artist, apiKey);
       groups = artistData.groups;
     } catch {
-      // Artist not found on RED — search requests as fallback
+      // Artist not found on RED - search requests as fallback
       const requestResults = await searchRequests(`${artist} ${title}`, apiKey).catch(() => []);
       const requests = matchRequests(requestResults);
       return makeResult('not_uploaded', 0, requests);
@@ -750,7 +750,7 @@ export async function getRedStatus(
   const narrowResult = narrowCandidates(allCandidates, release);
 
   if (narrowResult.result === 'single') {
-    // Step 9: Already on RED — fetch requests linked to this group
+    // Step 9: Already on RED - fetch requests linked to this group
     const otherEditions = countOtherEditions(narrowResult.candidate, allCandidates);
     const requests = await fetchRequestsForGroup(narrowResult.candidate.groupName, narrowResult.candidate.groupId, apiKey);
     return makeResult('uploaded', otherEditions, requests, narrowResult.candidate.groupId);

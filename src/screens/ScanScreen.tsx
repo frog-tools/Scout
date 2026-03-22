@@ -7,11 +7,23 @@ import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
-import { searchByBarcode, parseArtistTitle, fetchReleaseDetail } from '../services/discogs';
+import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImages } from '../services/discogs';
 import { getRedStatus } from '../services/redacted';
+import ReleasePicker from '../components/ReleasePicker';
 import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from '../types';
 
-type ScanState = 'idle' | 'looking_up' | 'result' | 'error';
+type ScanState = 'idle' | 'looking_up' | 'disambiguate' | 'result' | 'error';
+
+function patchSearchResultImages(
+  hit: DiscogsSearchResult,
+  detail: DiscogsReleaseDetail,
+): void {
+  if (!hit.thumb && !hit.cover_image && detail.images?.length) {
+    const primary = detail.images.find((img) => img.type === 'primary') ?? detail.images[0];
+    hit.thumb = primary?.uri150 ?? '';
+    hit.cover_image = primary?.uri ?? '';
+  }
+}
 
 export default function ScanScreen() {
   const theme = useTheme();
@@ -27,6 +39,8 @@ export default function ScanScreen() {
   const [redStatus, setRedStatus] = useState<RedStatus | null>(null);
   const [redLoading, setRedLoading] = useState(false);
   const [releaseDetail, setReleaseDetail] = useState<DiscogsReleaseDetail | null>(null);
+  const [candidates, setCandidates] = useState<DiscogsSearchResult[]>([]);
+  const [coverMap, setCoverMap] = useState<Map<number, string>>(new Map());
 
   // Fetch RED status when release detail is available
   useEffect(() => {
@@ -71,6 +85,19 @@ export default function ScanScreen() {
 
         const token = settings.discogsToken || undefined;
         const results = await searchByBarcode(data, token);
+
+        if (results.filter((r) => r.type === 'release').length === 0) {
+          setScanState('error');
+          setSnackbar('No results found for this barcode');
+          setTimeout(() => {
+            scanLockRef.current = false;
+            setScanState('idle');
+          }, 2000);
+          return;
+        }
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
         const releases = results.filter((r) => r.type === 'release');
 
         if (releases.length === 0) {
@@ -83,41 +110,48 @@ export default function ScanScreen() {
           return;
         }
 
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        // Steps 2–4: Find first valid release (non-404) and fetch detail
-        let hit: DiscogsSearchResult | null = null;
-        let detail: DiscogsReleaseDetail | null = null;
-        for (const r of releases) {
-          const d = await fetchReleaseDetail(r.id, token);
-          if (d) {
-            hit = r;
-            detail = d;
-            detail.barcode = data;
-            break;
+        if (releases.length === 1) {
+          // Single result: fetch detail and auto-select
+          const hit = releases[0]!;
+          const detail = await fetchReleaseDetail(hit.id, token);
+          if (!detail) {
+            setScanState('error');
+            setSnackbar('Release details unavailable');
+            setTimeout(() => {
+              scanLockRef.current = false;
+              setScanState('idle');
+            }, 2000);
+            return;
+          }
+          detail.barcode = data;
+          patchSearchResultImages(hit, detail);
+          setResult(hit);
+          setReleaseDetail(detail);
+          setScanState('result');
+        } else {
+          // Multiple results: show picker (no detail fetching needed)
+          setCandidates(releases);
+          setCoverMap(new Map());
+          setScanState('disambiguate');
+          // Fetch one cover per unique title in background
+          const titleToFirst = new Map<string, number>();
+          for (const r of releases) {
+            if (!titleToFirst.has(r.title)) titleToFirst.set(r.title, r.id);
+          }
+          for (const [releaseTitle, releaseId] of titleToFirst) {
+            fetchReleaseImages(releaseId, token)
+              .then(({ coverImage }) => {
+                if (!coverImage) return;
+                const ids = releases.filter((r) => r.title === releaseTitle).map((r) => r.id);
+                setCoverMap((prev) => {
+                  const next = new Map(prev);
+                  for (const id of ids) next.set(id, coverImage);
+                  return next;
+                });
+              })
+              .catch(() => {});
           }
         }
-
-        if (!hit || !detail) {
-          setScanState('error');
-          setSnackbar('Release details unavailable');
-          setTimeout(() => {
-            scanLockRef.current = false;
-            setScanState('idle');
-          }, 2000);
-          return;
-        }
-
-        // Use images from detail if search result lacks them
-        if (!hit.thumb && !hit.cover_image && detail.images?.length) {
-          const primary = detail.images.find((img) => img.type === 'primary') ?? detail.images[0];
-          hit.thumb = primary?.uri150 ?? '';
-          hit.cover_image = primary?.uri ?? '';
-        }
-
-        setResult(hit);
-        setReleaseDetail(detail);
-        setScanState('result');
       } catch {
         setScanState('error');
         setSnackbar('Failed to look up barcode. Check your connection.');
@@ -163,6 +197,43 @@ export default function ScanScreen() {
   const handleDismiss = useCallback(() => {
     setResult(null);
     setReleaseDetail(null);
+    setCandidates([]);
+    setScanState('idle');
+    scanLockRef.current = false;
+  }, []);
+
+  const handleSelectRelease = useCallback(async (selected: DiscogsSearchResult) => {
+    setScanState('looking_up');
+    try {
+      const token = settings.discogsToken || undefined;
+      const detail = await fetchReleaseDetail(selected.id, token);
+      if (!detail) {
+        setScanState('error');
+        setSnackbar('Release details unavailable');
+        setTimeout(() => {
+          scanLockRef.current = false;
+          setScanState('idle');
+        }, 2000);
+        return;
+      }
+      detail.barcode = scannedBarcodeRef.current;
+      patchSearchResultImages(selected, detail);
+      setResult(selected);
+      setReleaseDetail(detail);
+      setCandidates([]);
+      setScanState('result');
+    } catch {
+      setScanState('error');
+      setSnackbar('Failed to fetch release details');
+      setTimeout(() => {
+        scanLockRef.current = false;
+        setScanState('idle');
+      }, 2000);
+    }
+  }, [settings.discogsToken]);
+
+  const handlePickerDismiss = useCallback(() => {
+    setCandidates([]);
     setScanState('idle');
     scanLockRef.current = false;
   }, []);
@@ -265,6 +336,14 @@ export default function ScanScreen() {
           </View>
         </Surface>
       )}
+
+      <ReleasePicker
+        visible={scanState === 'disambiguate'}
+        candidates={candidates}
+        coverMap={coverMap}
+        onSelect={handleSelectRelease}
+        onDismiss={handlePickerDismiss}
+      />
 
       {scanState === 'idle' && !result && lastAdded && (
         <Surface style={styles.lastAdded} elevation={1}>

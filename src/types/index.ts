@@ -1,4 +1,4 @@
-// ── Album (persisted) ──────────────────────────────────────────────
+// -- Album (persisted) ----------------------------------------------
 
 export interface Album {
   id: string;
@@ -17,7 +17,7 @@ export interface Album {
   redStatus?: RedStatus;
 }
 
-// ── Discogs types ──────────────────────────────────────────────────
+// -- Discogs types --------------------------------------------------
 
 export interface DiscogsSearchResult {
   id: number;
@@ -89,9 +89,9 @@ export interface DiscogsReleaseDetail {
   barcode: string;         // Set by caller (scanned barcode)
 }
 
-// ── RED (Redacted) types ───────────────────────────────────────────
+// -- RED (Redacted) types -------------------------------------------
 
-// From action=artist — torrentgroup[].torrent[] (singular key!)
+// From action=artist - torrentgroup[].torrent[] (singular key!)
 export interface RedArtistTorrent {
   id: number;
   groupId: number;
@@ -123,7 +123,7 @@ export interface RedArtistRequest {
   bounty: number;
 }
 
-// From action=torrentgroup — torrents[] (plural key!)
+// From action=torrentgroup - torrents[] (plural key!)
 export interface RedGroupTorrent {
   id: number;
   media: string;
@@ -173,7 +173,7 @@ export interface RedStatus {
   matchedGroupId?: number;
 }
 
-// ── Settings and Theme ─────────────────────────────────────────────
+// -- Settings and Theme ---------------------------------------------
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 

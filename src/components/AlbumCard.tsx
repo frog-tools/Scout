@@ -108,6 +108,11 @@ function AlbumCard({
               >
                 {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
               </Chip>
+              {album.redStatus.trumpable && (
+                <Chip icon="chevron-double-up" compact style={styles.chipTrumpable} textStyle={styles.chipText}>
+                  Trumpable
+                </Chip>
+              )}
               {album.redStatus.requests[0] && (
                 <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact textStyle={styles.chipText}>
                   {album.redStatus.requests[0].formatList} - {formatBounty(album.redStatus.requests[0].bounty)}
@@ -158,6 +163,14 @@ function AlbumCard({
                       {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
                     </Text>
                   </View>
+                  {album.redStatus.trumpable && (
+                    <View style={styles.editionRow}>
+                      <Icon source="chevron-double-up" size={14} color="#9C7C00" />
+                      <Text variant="bodySmall" style={{ color: '#9C7C00' }}>
+                        Trumpable — no lossless upload
+                      </Text>
+                    </View>
+                  )}
                   {album.redStatus.requests[0] && (
                     <>
                       <Text variant="labelMedium" style={{ color: theme.colors.primary, marginTop: 6 }}>
@@ -247,6 +260,9 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 11,
+  },
+  chipTrumpable: {
+    backgroundColor: '#FFF9C4',
   },
   redSection: {
     marginTop: 4,

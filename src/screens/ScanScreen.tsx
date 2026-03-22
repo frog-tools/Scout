@@ -320,6 +320,11 @@ export default function ScanScreen() {
                   >
                     {redStatus.uploaded ? 'Already on RED' : 'Not uploaded yet!'}
                   </Chip>
+                  {redStatus.trumpable && (
+                    <Chip icon="chevron-double-up" compact style={styles.chipTrumpable}>
+                      Trumpable
+                    </Chip>
+                  )}
                   {redStatus.requests[0] && (
                     <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact>
                       Request exists: {redStatus.requests[0].formatList}
@@ -448,6 +453,9 @@ const styles = StyleSheet.create({
   },
   chipNotUploaded: {
     backgroundColor: '#c8e6c9',
+  },
+  chipTrumpable: {
+    backgroundColor: '#FFF9C4',
   },
   lastAdded: {
     margin: 16,

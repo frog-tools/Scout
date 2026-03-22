@@ -166,6 +166,7 @@ export interface RedRequest {
 export interface RedStatus {
   result: RedMatchResult;
   uploaded: boolean;          // Backwards compat: result === 'uploaded'
+  trumpable: boolean;
   otherEditionCount: number;
   requestCount: number;
   requests: RedRequest[];

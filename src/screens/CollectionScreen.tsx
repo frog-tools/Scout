@@ -22,6 +22,7 @@ export default function CollectionScreen() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [snackbar, setSnackbar] = useState('');
   const [redLookupLoading, setRedLookupLoading] = useState(false);
+  const [redSearchingIds, setRedSearchingIds] = useState<Set<string>>(new Set());
   const theme = useTheme();
 
   const exitSelectionMode = useCallback(() => {
@@ -113,6 +114,7 @@ export default function CollectionScreen() {
     if (selected.length === 0) return;
 
     setRedLookupLoading(true);
+    setRedSearchingIds(new Set(selected.map((a) => a.id)));
     let updated = 0;
 
     for (const album of selected) {
@@ -128,6 +130,12 @@ export default function CollectionScreen() {
         updated++;
       } catch {
         // Continue with remaining items on failure
+      } finally {
+        setRedSearchingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(album.id);
+          return next;
+        });
       }
     }
 
@@ -144,11 +152,12 @@ export default function CollectionScreen() {
         isSelected={selectedIds.has(item.id)}
         selectionMode={selectionMode}
         frogModeActive={settings.frogModeActive}
+        redSearching={redSearchingIds.has(item.id)}
         onPress={() => (selectionMode ? toggleSelect(item.id) : undefined)}
         onLongPress={() => !selectionMode && enterSelectionMode(item.id)}
       />
     ),
-    [selectionMode, selectedIds, toggleSelect, enterSelectionMode, settings.frogModeActive],
+    [selectionMode, selectedIds, toggleSelect, enterSelectionMode, settings.frogModeActive, redSearchingIds],
   );
 
   const keyExtractor = useCallback((item: Album) => item.id, []);

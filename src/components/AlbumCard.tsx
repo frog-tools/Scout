@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Image, Pressable } from 'react-native';
-import { Text, Chip, Icon, Surface, useTheme } from 'react-native-paper';
+import { Text, Chip, Icon, ActivityIndicator, Surface, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
 import Sortable from 'react-native-sortables';
 import type { Album } from '../types';
@@ -26,6 +26,7 @@ interface Props {
   isSelected: boolean;
   selectionMode: boolean;
   frogModeActive: boolean;
+  redSearching?: boolean;
   onPress: () => void;
   onLongPress: () => void;
 }
@@ -35,6 +36,7 @@ function AlbumCard({
   isSelected,
   selectionMode,
   frogModeActive,
+  redSearching,
   onPress,
   onLongPress,
 }: Props) {
@@ -89,7 +91,14 @@ function AlbumCard({
           <Text variant="bodyMedium" numberOfLines={1} style={{ color: theme.colors.onSurfaceVariant }}>
             {album.artist}
           </Text>
-          {!expanded && album.redStatus && (
+          {!expanded && redSearching && (
+            <View style={styles.redBadgeRow}>
+              <Chip icon={({ size }) => <ActivityIndicator size={size} />} compact textStyle={styles.chipText}>
+                Checking RED...
+              </Chip>
+            </View>
+          )}
+          {!expanded && !redSearching && album.redStatus && (
             <View style={styles.redBadgeRow}>
               <Chip
                 icon={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
@@ -195,7 +204,8 @@ export default React.memo(AlbumCard, (prev, next) => {
     prev.album.redStatus === next.album.redStatus &&
     prev.isSelected === next.isSelected &&
     prev.selectionMode === next.selectionMode &&
-    prev.frogModeActive === next.frogModeActive
+    prev.frogModeActive === next.frogModeActive &&
+    prev.redSearching === next.redSearching
   );
 });
 

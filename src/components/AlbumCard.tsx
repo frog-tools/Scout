@@ -151,10 +151,14 @@ function AlbumCard({
               {album.catalogNumber !== '' && (
                 <Text
                   variant="bodySmall"
-                  style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}
-                  onPress={() => Linking.openURL(`https://www.discogs.com/release/${album.discogsId}`)}
-                >
-                  Catalog #: {album.catalogNumber}
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >Catalog #:{' '}
+                  <Text
+                    style={{ color: theme.colors.primary, textDecorationLine: 'underline' }}
+                    onPress={() => Linking.openURL(`https://www.discogs.com/release/${album.discogsId}`)}
+                  >
+                  {album.catalogNumber}
+                  </Text>
                 </Text>
               )}
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>

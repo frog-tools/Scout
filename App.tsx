@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useWindowDimensions, useColorScheme, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useWindowDimensions, useColorScheme, BackHandler, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -37,6 +37,19 @@ function AppContent() {
   const colorScheme = useColorScheme();
   const [index, setIndex] = useState(0);
   const { settings } = useSettings();
+
+  const handleBack = useCallback(() => {
+    if (index !== 0) {
+      setIndex(0);
+      return true;
+    }
+    return false;
+  }, [index]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', handleBack);
+    return () => sub.remove();
+  }, [handleBack]);
 
   const isDark =
     settings.themeMode === 'dark' ||

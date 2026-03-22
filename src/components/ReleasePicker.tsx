@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Image, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { Portal, Dialog, Button, Menu, Text, TextInput, Divider, useTheme, type MD3Theme } from 'react-native-paper';
+import { ActivityIndicator, Portal, Dialog, Button, Menu, Text, TextInput, Divider, useTheme, type MD3Theme } from 'react-native-paper';
 import type { DiscogsSearchResult } from '../types';
 import { parseArtistTitle, stripDiscogsDisambiguator } from '../services/discogs';
 
@@ -8,6 +8,9 @@ interface ReleasePickerProps {
   visible: boolean;
   candidates: DiscogsSearchResult[];
   coverMap: Map<number, string>;
+  loading?: boolean;
+  error: string | null;
+  onErrorDismiss: () => void;
   onSelect: (result: DiscogsSearchResult) => void;
   onDismiss: () => void;
 }
@@ -51,6 +54,9 @@ export default function ReleasePicker({
   visible,
   candidates,
   coverMap,
+  loading,
+  error,
+  onErrorDismiss,
   onSelect,
   onDismiss,
 }: ReleasePickerProps) {
@@ -108,10 +114,15 @@ export default function ReleasePicker({
 
   return (
     <Portal>
-      <Dialog visible={visible} onDismiss={onDismiss} style={styles.dialog}>
+      <Dialog visible={visible} onDismiss={loading ? undefined : onDismiss} style={styles.dialog} dismissable={!loading}>
         <Dialog.Title>Choose pressing</Dialog.Title>
         <Dialog.ScrollArea style={styles.scrollArea}>
-          <ScrollView>
+          {loading && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" />
+            </View>
+          )}
+          <ScrollView pointerEvents={loading ? 'none' : 'auto'} style={loading ? { opacity: 0.4 } : undefined}>
             {/* Filters */}
             <View style={styles.filterSection}>
               <FilterDropdown
@@ -224,7 +235,16 @@ export default function ReleasePicker({
           {hasActiveFilters ? (
             <Button onPress={() => setFilters(emptyFilters)}>Clear filters</Button>
           ) : null}
-          <Button onPress={onDismiss}>Cancel</Button>
+          <Button onPress={onDismiss} disabled={loading}>Cancel</Button>
+        </Dialog.Actions>
+      </Dialog>
+      <Dialog visible={!!error} onDismiss={onErrorDismiss}>
+        <Dialog.Title>Oh no!</Dialog.Title>
+        <Dialog.Content>
+          <Text variant="bodyMedium">{error}</Text>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={onErrorDismiss}>Remove from results</Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>
@@ -309,6 +329,13 @@ const styles = StyleSheet.create({
   },
   scrollArea: {
     paddingHorizontal: 0,
+    position: 'relative',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
   filterSection: {
     paddingHorizontal: 24,

@@ -202,18 +202,19 @@ export default function ScanScreen() {
     scanLockRef.current = false;
   }, []);
 
+  const selectingRef = useRef(false);
+
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerError, setPickerError] = useState<{ id: number; message: string } | null>(null);
+
   const handleSelectRelease = useCallback(async (selected: DiscogsSearchResult) => {
-    setScanState('looking_up');
+    selectingRef.current = true;
+    setPickerLoading(true);
     try {
       const token = settings.discogsToken || undefined;
       const detail = await fetchReleaseDetail(selected.id, token);
       if (!detail) {
-        setScanState('error');
-        setSnackbar('Release details unavailable');
-        setTimeout(() => {
-          scanLockRef.current = false;
-          setScanState('idle');
-        }, 2000);
+        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing.' });
         return;
       }
       detail.barcode = scannedBarcodeRef.current;
@@ -223,16 +224,22 @@ export default function ScanScreen() {
       setCandidates([]);
       setScanState('result');
     } catch {
-      setScanState('error');
-      setSnackbar('Failed to fetch release details');
-      setTimeout(() => {
-        scanLockRef.current = false;
-        setScanState('idle');
-      }, 2000);
+      setPickerError({ id: selected.id, message: 'Failed to fetch release details. This may be a network issue.' });
+    } finally {
+      selectingRef.current = false;
+      setPickerLoading(false);
     }
   }, [settings.discogsToken]);
 
+  const handlePickerErrorDismiss = useCallback(() => {
+    if (pickerError) {
+      setCandidates((prev) => prev.filter((c) => c.id !== pickerError.id));
+    }
+    setPickerError(null);
+  }, [pickerError]);
+
   const handlePickerDismiss = useCallback(() => {
+    if (selectingRef.current) return;
     setCandidates([]);
     setScanState('idle');
     scanLockRef.current = false;
@@ -341,6 +348,7 @@ export default function ScanScreen() {
         visible={scanState === 'disambiguate'}
         candidates={candidates}
         coverMap={coverMap}
+        loading={pickerLoading}
         onSelect={handleSelectRelease}
         onDismiss={handlePickerDismiss}
       />

@@ -108,7 +108,7 @@ function editionKey(t) {
     : `${t.media}|original`;
 }
 
-/** Map test-data format key → RED torrent format+encoding */
+/** Map test-data format key -> RED torrent format+encoding */
 function fmtToRed(fmt) {
   const map = {
     FLAC: { format: 'FLAC', encoding: 'Lossless' },
@@ -172,7 +172,7 @@ async function validateDiscogs(item, idx) {
       if (check.ok) {
         validResults.push(r);
       } else {
-        info(`Result ${r.id} → HTTP ${check.status}, discarded`);
+        info(`Result ${r.id} -> HTTP ${check.status}, discarded`);
       }
     }
     if (validResults.length === 1) {
@@ -227,7 +227,7 @@ async function validateRed(item, idx) {
       return;
     }
 
-    // Look up first torrent → get group ID
+    // Look up first torrent -> get group ID
     const firstTid = extractTorrentId(formats[fmtNames[0]].permalink);
     info(`Looking up torrent ${firstTid}…`);
     const tRes = await redFetch({ action: 'torrent', id: String(firstTid) });

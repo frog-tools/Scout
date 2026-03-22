@@ -165,6 +165,8 @@ export function normalizeCatNo(s: string): string {
 /** Normalize a title for comparison: lowercase, strip non-alphanumeric, collapse spaces. */
 export function normalizeTitle(s: string): string {
   return decodeHtmlEntities(s)
+    .replace(/&\w+;/g, '')
+    .replace(/&#x?[\da-fA-F]+;/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, ' ')
@@ -437,8 +439,8 @@ function parseRedFileList(fileList: string): string[] {
       // Strip directory prefix and extension, then strip leading track numbers
       const base = name.replace(/.*\//, '').replace(/\.[^.]+$/, '');
       return base
-        .replace(/^\d+[\s._-]+/, '') // "01 - Track" → "Track"
-        .replace(/^\d+\s*/, '')      // "01Track" → "Track"
+        .replace(/^\d+[\s._-]+/, '') // "01 - Track" -> "Track"
+        .replace(/^\d+\s*/, '')      // "01Track" -> "Track"
         .trim();
     });
 }
@@ -671,6 +673,8 @@ export async function getRedStatus(
   const artist = release.artistDisplay;
   const title = release.title;
 
+  console.log('[RED] getRedStatus:', { artist, title, format: release.formats[0]?.name });
+
   // Step 5: Look up artist (or browse for VA releases)
   let groups: RedArtistTorrentGroup[];
 
@@ -701,8 +705,10 @@ export async function getRedStatus(
     try {
       const artistData = await fetchArtist(artist, apiKey);
       groups = artistData.groups;
-    } catch {
+      console.log('[RED] Artist groups:', groups.length);
+    } catch (e) {
       // Artist not found on RED - search requests as fallback
+      console.log('[RED] Artist lookup failed:', e);
       const requestResults = await searchRequests(`${artist} ${title}`, apiKey).catch(() => []);
       const requests = matchRequests(requestResults);
       return makeResult('not_uploaded', 0, requests);
@@ -718,9 +724,13 @@ export async function getRedStatus(
 
   // Step 6: Filter by release type
   const typeFiltered = filterByReleaseType(groups, release.formats);
+  console.log('[RED] After release type filter:', typeFiltered.length, 'groups');
 
   // Step 7: Title match
+  console.log('[RED] Normalized target:', normalizeTitle(title));
+  console.log('[RED] Group names sample:', typeFiltered.slice(0, 5).map((g) => `"${g.groupName}" -> "${normalizeTitle(g.groupName)}"`));
   const titleMatches = matchByTitle(typeFiltered, title);
+  console.log('[RED] Title matches:', titleMatches.length, titleMatches.map((g) => g.groupName));
   if (titleMatches.length === 0) {
     const requests = await searchFallbackRequests();
     return makeResult('not_uploaded', 0, requests);
@@ -741,6 +751,9 @@ export async function getRedStatus(
     }
   }
 
+  console.log('[RED] allCandidates:', allCandidates.length, 'editions:', new Set(allCandidates.map(editionKeyOf)).size);
+  console.log('[RED] candidate media types:', [...new Set(allCandidates.map((c) => c.media))]);
+
   if (allCandidates.length === 0) {
     const requests = await searchFallbackRequests();
     return makeResult('not_uploaded', 0, requests);
@@ -748,10 +761,12 @@ export async function getRedStatus(
 
   // Step 8: Successive narrowing
   const narrowResult = narrowCandidates(allCandidates, release);
+  console.log('[RED] narrowResult:', narrowResult.result);
 
   if (narrowResult.result === 'single') {
     // Step 9: Already on RED - fetch requests linked to this group
     const otherEditions = countOtherEditions(narrowResult.candidate, allCandidates);
+    console.log('[RED] -> single match, otherEditions:', otherEditions);
     const requests = await fetchRequestsForGroup(narrowResult.candidate.groupName, narrowResult.candidate.groupId, apiKey);
     return makeResult('uploaded', otherEditions, requests, narrowResult.candidate.groupId);
   }
@@ -759,9 +774,11 @@ export async function getRedStatus(
   // Steps 10–11: Track matching (for both 'zero' and 'multiple' outcomes)
   const groupDetails = [...groupDetailCache.values()];
   const trackMatches = matchByTrackListing(release, groupDetails);
+  console.log('[RED] trackMatches:', trackMatches.length);
 
   if (trackMatches.length >= 1) {
     const otherEditions = countOtherEditions(trackMatches[0]!, allCandidates);
+    console.log('[RED] -> track match, otherEditions:', otherEditions);
     const requests = await fetchRequestsForGroup(trackMatches[0]!.groupName, trackMatches[0]!.groupId, apiKey);
     return makeResult('uploaded', otherEditions, requests, trackMatches[0]!.groupId);
   }
@@ -769,10 +786,13 @@ export async function getRedStatus(
   // If title matched with multiple editions, treat as already on RED
   if (narrowResult.result === 'multiple') {
     const otherEditions = countOtherEditions(narrowResult.candidates[0]!, allCandidates);
+    console.log('[RED] -> multiple match, otherEditions:', otherEditions);
     const requests = await fetchRequestsForGroup(narrowResult.candidates[0]!.groupName, narrowResult.candidates[0]!.groupId, apiKey);
     return makeResult('uploaded', otherEditions, requests, narrowResult.candidates[0]!.groupId);
   }
 
   const requests = await searchFallbackRequests();
-  return makeResult('not_uploaded', 0, requests);
+  const otherEditions = new Set(allCandidates.map(editionKeyOf)).size;
+  console.log('[RED] -> not_uploaded fallback, otherEditions:', otherEditions);
+  return makeResult('not_uploaded', otherEditions, requests);
 }

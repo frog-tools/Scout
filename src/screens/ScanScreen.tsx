@@ -11,6 +11,7 @@ import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImag
 import { getRedStatus } from '../services/redacted';
 import ReleasePicker from '../components/ReleasePicker';
 import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from '../types';
+import { error } from 'console';
 
 type ScanState = 'idle' | 'looking_up' | 'disambiguate' | 'result' | 'error';
 
@@ -214,7 +215,7 @@ export default function ScanScreen() {
       const token = settings.discogsToken || undefined;
       const detail = await fetchReleaseDetail(selected.id, token);
       if (!detail) {
-        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing.' });
+        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing. This is usually due to an issue with Discogs. Please select another pressing.' });
         return;
       }
       detail.barcode = scannedBarcodeRef.current;
@@ -349,8 +350,10 @@ export default function ScanScreen() {
         candidates={candidates}
         coverMap={coverMap}
         loading={pickerLoading}
+        error={pickerError?.message ?? null}
         onSelect={handleSelectRelease}
         onDismiss={handlePickerDismiss}
+        onErrorDismiss={handlePickerErrorDismiss}
       />
 
       {scanState === 'idle' && !result && lastAdded && (

@@ -101,7 +101,7 @@ export async function fetchReleaseDetail(
 
 /**
  * Step 2: Filter search results - remove non-release types and 404s.
- * Returns a cache map of release ID → detail for valid results.
+ * Returns a cache map of release ID -> detail for valid results.
  * Fetches details in parallel with bounded concurrency.
  */
 export async function filterValidReleases(

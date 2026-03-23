@@ -323,12 +323,13 @@ export default function ScanScreen() {
                   <Chip
                     icon={redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                     compact
-                    style={redStatus.uploaded ? undefined : styles.chipNotUploaded}
+                    style={redStatus.uploaded ? undefined : { backgroundColor: theme.colors.secondary }}
+                    textStyle={styles.chipText}
                   >
                     {redStatus.uploaded ? 'Already on RED' : 'Not uploaded yet!'}
                   </Chip>
                   {redStatus.trumpable && (
-                    <Chip icon="chevron-double-up" compact style={styles.chipTrumpable}>
+                    <Chip icon="chevron-double-up" compact style={{ backgroundColor: theme.dark ? '#4A3800' : '#FFF9C4' }} textStyle={styles.chipText}>
                       Trumpable
                     </Chip>
                   )}
@@ -458,11 +459,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 10,
   },
-  chipNotUploaded: {
-    backgroundColor: '#c8e6c9',
-  },
-  chipTrumpable: {
-    backgroundColor: '#FFF9C4',
+  chipText: {
+    fontSize: 11,
   },
   lastAdded: {
     margin: 16,

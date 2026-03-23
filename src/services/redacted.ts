@@ -16,6 +16,30 @@ const BASE_URL = 'https://redacted.sh/ajax.php';
 const RATE_LIMIT = 10;
 const RATE_WINDOW = 10_000;
 
+// -- Auth error guard -----------------------------------------------
+// After a 401, block all requests until the API key changes.
+// A 403 is surfaced as a warning but does not block future requests.
+
+let blockedApiKey: string | null = null;
+
+export class RedAuthError extends Error {
+  constructor(status: number) {
+    super('The RED API key is invalid. Requests are paused to prevent an IP ban. Change your API key in Settings.');
+    this.name = 'RedAuthError';
+    this.title = 'Careful now...';
+  }
+  title: string;
+}
+
+export class RedForbiddenError extends Error {
+  constructor() {
+    super('The RED API key is not authorised for this action. Please make sure it is enabled for Torrents and Requests.');
+    this.name = 'RedForbiddenError';
+    this.title = 'Ei perkele!';
+  }
+  title: string;
+}
+
 // -- Rate limiter (sliding window) ----------------------------------
 
 const requestTimestamps: number[] = [];
@@ -23,7 +47,11 @@ const requestTimestamps: number[] = [];
 async function rateLimitedFetch(
   url: string,
   init: RequestInit,
+  apiKey: string,
 ): Promise<Response> {
+  if (blockedApiKey !== null && blockedApiKey === apiKey) {
+    throw new RedAuthError(401);
+  }
   const now = Date.now();
   while (requestTimestamps.length > 0 && requestTimestamps[0]! <= now - RATE_WINDOW) {
     requestTimestamps.shift();
@@ -33,7 +61,15 @@ async function rateLimitedFetch(
     await new Promise((resolve) => setTimeout(resolve, waitUntil - now));
   }
   requestTimestamps.push(Date.now());
-  return fetch(url, init);
+  const res = await fetch(url, init);
+  if (res.status === 401) {
+    blockedApiKey = apiKey;
+    throw new RedAuthError(res.status);
+  }
+  if (res.status === 403) {
+    throw new RedForbiddenError();
+  }
+  return res;
 }
 
 function headers(apiKey: string): HeadersInit {
@@ -102,7 +138,7 @@ async function fetchArtist(
   apiKey: string,
 ): Promise<{ groups: RedArtistTorrentGroup[] }> {
   const query = new URLSearchParams({ action: 'artist', artistname: name });
-  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) });
+  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) }, apiKey);
   if (!res.ok) throw new Error(`RED artist lookup failed: ${res.status}`);
   const data: ArtistResponse = await res.json();
   if (data.status !== 'success') return { groups: [] };
@@ -114,7 +150,7 @@ async function fetchTorrentGroup(
   apiKey: string,
 ): Promise<RedGroupDetail | null> {
   const query = new URLSearchParams({ action: 'torrentgroup', id: String(groupId) });
-  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) });
+  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) }, apiKey);
   if (!res.ok) return null;
   const data: TorrentGroupResponse = await res.json();
   if (data.status !== 'success') return null;
@@ -126,7 +162,7 @@ async function browseTorrents(
   apiKey: string,
 ): Promise<BrowseResponse['response']['results']> {
   const query = new URLSearchParams({ action: 'browse', ...params });
-  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) });
+  const res = await rateLimitedFetch(`${BASE_URL}?${query}`, { headers: headers(apiKey) }, apiKey);
   if (!res.ok) {
     if (res.status === 429) throw new Error('Rate limited');
     throw new Error(`RED API error: ${res.status}`);
@@ -145,7 +181,7 @@ async function searchRequests(
     search: searchTerm,
     show_filled: 'false',
   });
-  const res = await rateLimitedFetch(`${BASE_URL}?${params}`, { headers: headers(apiKey) });
+  const res = await rateLimitedFetch(`${BASE_URL}?${params}`, { headers: headers(apiKey) }, apiKey);
   if (!res.ok) {
     if (res.status === 429) throw new Error('Rate limited');
     return [];
@@ -643,7 +679,10 @@ async function fetchRequestsForGroup(
   groupId: number,
   apiKey: string,
 ): Promise<RedRequest[]> {
-  const results = await searchRequests(groupName, apiKey).catch(() => []);
+  const results = await searchRequests(groupName, apiKey).catch((err) => {
+    if (err instanceof RedAuthError || err instanceof RedForbiddenError) throw err;
+    return [];
+  });
   return matchRequests(results, groupId);
 }
 
@@ -714,9 +753,13 @@ export async function getRedStatus(
     try {
       const artistData = await fetchArtist(artist, apiKey);
       groups = artistData.groups;
-    } catch {
+    } catch (err) {
+      if (err instanceof RedAuthError || err instanceof RedForbiddenError) throw err;
       // Artist not found on RED - search requests as fallback
-      const requestResults = await searchRequests(`${artist} ${title}`, apiKey).catch(() => []);
+      const requestResults = await searchRequests(`${artist} ${title}`, apiKey).catch((e) => {
+        if (e instanceof RedAuthError || e instanceof RedForbiddenError) throw e;
+        return [];
+      });
       const requests = matchRequests(requestResults);
       return makeResult('not_uploaded', 0, requests);
     }
@@ -725,7 +768,10 @@ export async function getRedStatus(
   // Helper: search requests (general text search, no group filter)
   const searchFallbackRequests = async () => {
     const term = isVariousArtists(artist) ? title : `${artist} ${title}`;
-    const results = await searchRequests(term, apiKey).catch(() => []);
+    const results = await searchRequests(term, apiKey).catch((e) => {
+      if (e instanceof RedAuthError || e instanceof RedForbiddenError) throw e;
+      return [];
+    });
     return matchRequests(results);
   };
 

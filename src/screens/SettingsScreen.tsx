@@ -40,6 +40,14 @@ export default function SettingsScreen() {
           >
             Get a token at discogs.com/settings/developers. Adding a token increases the API rate limit.
           </Text>
+          {settings.discogsToken.length > 0 && (
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
+            >
+              Current key prefix: {settings.discogsToken.slice(0, 8)}
+            </Text>
+          )}
         </View>
       </List.Section>
 
@@ -64,6 +72,14 @@ export default function SettingsScreen() {
           >
             Generate an API key for Torrents and Requests in your RED user settings. Enables checking whether scanned releases are already uploaded or requested.
           </Text>
+          {settings.redApiKey.length > 0 && (
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}
+            >
+              Current key prefix: {settings.redApiKey.slice(0, 8)}
+            </Text>
+          )}
         </View>
       </List.Section>
 

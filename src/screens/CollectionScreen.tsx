@@ -7,7 +7,8 @@ import type { SortableGridRenderItem } from 'react-native-sortables';
 import * as Haptics from 'expo-haptics';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
-import { getRedStatus } from '../services/redacted';
+import { useRedError } from '../context/RedErrorContext';
+import { getRedStatus, RedAuthError, RedForbiddenError } from '../services/redacted';
 import { fetchReleaseDetail } from '../services/discogs';
 import AlbumCard from '../components/AlbumCard';
 import SelectionToolbar from '../components/SelectionToolbar';
@@ -24,6 +25,7 @@ export default function CollectionScreen() {
   const [redLookupLoading, setRedLookupLoading] = useState(false);
   const [redSearchingIds, setRedSearchingIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const { showRedError } = useRedError();
   const theme = useTheme();
 
   const exitSelectionMode = useCallback(() => {
@@ -129,6 +131,7 @@ export default function CollectionScreen() {
     setRedLookupLoading(true);
     setRedSearchingIds(new Set(selected.map((a) => a.id)));
     let updated = 0;
+    let authError = false;
 
     for (const album of selected) {
       try {
@@ -141,8 +144,19 @@ export default function CollectionScreen() {
         const status = await getRedStatus(detail, apiKey);
         updateAlbum(album.id, { redStatus: status });
         updated++;
-      } catch {
-        // Continue with remaining items on failure
+      } catch (err) {
+        if (err instanceof RedAuthError) {
+          setRedSearchingIds(new Set());
+          showRedError(err.title, err.message);
+          authError = true;
+          break;
+        }
+        if (err instanceof RedForbiddenError) {
+          setRedSearchingIds(new Set());
+          showRedError(err.title, err.message);
+          break;
+        }
+        // Continue with remaining items on other failures
       } finally {
         setRedSearchingIds((prev) => {
           const next = new Set(prev);
@@ -153,8 +167,9 @@ export default function CollectionScreen() {
     }
 
     setRedLookupLoading(false);
-    setSnackbar(`Updated RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
-  }, [albums, selectedIds, settings.redApiKey, settings.discogsToken, updateAlbum]);
+    if (!authError) {
+      setSnackbar(`Updated RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
+    }}, [albums, selectedIds, settings.redApiKey, settings.discogsToken, updateAlbum]);
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 

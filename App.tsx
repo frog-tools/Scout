@@ -7,6 +7,7 @@ import { TabView, type Route } from 'react-native-tab-view';
 import { StatusBar } from 'expo-status-bar';
 import { CollectionProvider } from './src/context/CollectionContext';
 import { SettingsProvider, useSettings } from './src/context/SettingsContext';
+import { RedErrorProvider } from './src/context/RedErrorContext';
 import { lightTheme, darkTheme, frogLightTheme, frogDarkTheme } from './src/theme';
 import TabBar from './src/components/TabBar';
 import CollectionScreen from './src/screens/CollectionScreen';
@@ -60,7 +61,8 @@ function AppContent() {
 
   return (
     <PaperProvider theme={theme}>
-      <CollectionProvider>
+      <RedErrorProvider>
+        <CollectionProvider>
         <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.background }]} edges={['top']}>
           <TabBar
             navigationState={{ index, routes }}
@@ -82,6 +84,7 @@ function AppContent() {
         </SafeAreaView>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </CollectionProvider>
+      </RedErrorProvider>
     </PaperProvider>
   );
 }

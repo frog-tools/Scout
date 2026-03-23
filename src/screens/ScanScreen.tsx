@@ -7,8 +7,9 @@ import * as Haptics from 'expo-haptics';
 import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
+import { useRedError } from '../context/RedErrorContext';
 import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImages } from '../services/discogs';
-import { getRedStatus } from '../services/redacted';
+import { getRedStatus, RedAuthError, RedForbiddenError } from '../services/redacted';
 import ReleasePicker from '../components/ReleasePicker';
 import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from '../types';
 import { error } from 'console';
@@ -30,6 +31,7 @@ export default function ScanScreen() {
   const theme = useTheme();
   const { addAlbum, hasBarcode } = useCollection();
   const { settings, setFrogMode } = useSettings();
+  const { showRedError } = useRedError();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [result, setResult] = useState<DiscogsSearchResult | null>(null);
@@ -53,7 +55,12 @@ export default function ScanScreen() {
     setRedLoading(true);
     getRedStatus(releaseDetail, settings.redApiKey)
       .then((status) => { if (!cancelled) setRedStatus(status); })
-      .catch(() => { if (!cancelled) setRedStatus(null); })
+      .catch((err) => {
+        if (!cancelled) {
+          setRedStatus(null);
+          if (err instanceof RedAuthError || err instanceof RedForbiddenError) showRedError(err.title, err.message);
+        }
+      })
       .finally(() => { if (!cancelled) setRedLoading(false); });
     return () => { cancelled = true; };
   }, [releaseDetail, settings.redApiKey]);

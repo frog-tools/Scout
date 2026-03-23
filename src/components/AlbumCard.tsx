@@ -212,7 +212,7 @@ function AlbumCard({
                     <View style={styles.editionRow}>
                       <Icon source="chevron-double-up" size={14} color="#9C7C00" />
                       <Text variant="bodySmall" style={{ color: '#9C7C00' }}>
-                        Trumpable — no lossless upload
+                        Trumpable - can be replaced
                       </Text>
                     </View>
                   )}

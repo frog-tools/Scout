@@ -11,21 +11,22 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.frogtools.scout"
+    },
     "plugins": [
       [
         "expo-build-properties",
         {
           "android": {
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "buildArchs": ["arm64-v8a"]
           }
         }
       ]
     ],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.frogtools.scout"
-    },
     "android": {
       "package": "com.frogtools.scout",
       "adaptiveIcon": {

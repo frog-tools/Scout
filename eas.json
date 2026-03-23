@@ -5,8 +5,7 @@
   "build": {
     "preview": {
       "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease -Pandroid.injected.abi.filter=arm64-v8a"
+        "buildType": "apk"
       },
       "distribution": "internal"
     },

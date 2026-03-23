@@ -42,17 +42,21 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease
 
+      - name: Rename APK
+        working-directory: android
+        run: mkdir artifacts; mv android/app/build/outputs/apk/release/app-release.apk Scout-${{ steps.version.outputs.tag }}.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Scout-${{ steps.version.outputs.tag }}.apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: Scout-${{ steps.version.outputs.tag }}.apk
 
       - name: Attach APK to release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "android/app/build/outputs/apk/release/app-release.apk#Scout-${{ steps.version.outputs.tag }}.apk"
+        run: gh release upload "${{ github.event.release.tag_name }}" "Scout-${{ steps.version.outputs.tag }}.apk"
 
   build-ios:
     runs-on: macos-latest

@@ -8,7 +8,7 @@ import type {
   RedGroupTorrent,
   RedMatchResult,
 } from '../types';
-import { parseDuration, filterAudioTracks } from './discogs';
+import { parseDuration, filterAudioTracks, stripDiscogsDisambiguator } from './discogs';
 
 // -- Constants ------------------------------------------------------
 
@@ -749,6 +749,45 @@ export async function getRedStatus(
         fileCount: t.fileCount,
       })),
     }));
+  } else if (release.artists.length > 1) {
+    // Multi-artist: look up each artist individually and merge groups.
+    // Deduplicate by groupId, preferring the entry with the lowest releaseType
+    // (the artist endpoint uses releaseType >= 1000 for non-main roles like
+    // Guest Appearance, so we need the main-artist entry to survive filtering)
+    const groupMap = new Map<number, RedArtistTorrentGroup>();
+
+    for (const artistCredit of release.artists) {
+      const name = artistCredit.anv || stripDiscogsDisambiguator(artistCredit.name);
+      try {
+        const data = await fetchArtist(name, apiKey);
+        for (const group of data.groups) {
+          const existing = groupMap.get(group.groupId);
+          if (!existing || group.releaseType < existing.releaseType) {
+            groupMap.set(group.groupId, group);
+          }
+        }
+      } catch (err) {
+        if (err instanceof RedAuthError || err instanceof RedForbiddenError) throw err;
+        // Individual artist not found - continue with remaining artists
+      }
+    }
+
+    if (groupMap.size === 0) {
+      const requestResults = await searchRequests(`${artist} ${title}`, apiKey).catch((e) => {
+        if (e instanceof RedAuthError || e instanceof RedForbiddenError) throw e;
+        return [];
+      });
+      const requests = matchRequests(requestResults);
+      return makeResult('not_uploaded', 0, requests);
+    }
+
+    // Remap artist-role releaseTypes (>=1000, e.g. Guest Appearance) to Unknown (21).
+    // The artist endpoint overloads releaseType for the artist's role on collaborative
+    // releases, hiding the real group type. Unknown passes through filterByReleaseType
+    // so title matching can determine relevance.
+    groups = [...groupMap.values()].map((g) =>
+      g.releaseType >= 1000 ? { ...g, releaseType: 21 } : g,
+    );
   } else {
     try {
       const artistData = await fetchArtist(artist, apiKey);

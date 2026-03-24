@@ -303,6 +303,36 @@
                 },
                 "other-editions": 1
             }
+        },
+        {
+            "barcode": "888072320536",
+            "discogs": {
+                "release": "https://www.discogs.com/release/32225961-Carole-King-James-Taylor-Live-At-The-Troubadour",
+                "results": {
+                    "singular": false,
+                    "filters": {
+                        "format": "CD",
+                        "year": "2010",
+                        "label": "Hear Music",
+                        "region": "New Zealand"
+                    }
+                }
+            },
+            "red": {
+                "fetched-at": "2026-03-24T22:55:30+02:00",
+                "uploaded": true,
+                "fillable-request": false,
+                "formats": {
+                    "FLAC": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=605769",
+                        "trumpable": false
+                    },
+                    "V0": {
+                        "permalink": "https://redacted.sh/torrents.php?torrentid=4849524",
+                        "trumpable": false
+                    }
+                }
+            }
         }
     ]
 }

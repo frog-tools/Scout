@@ -302,8 +302,13 @@ function filterByReleaseType(
 
   if (releaseType === null) return musicGroups;
 
-  // Anthology (6) and Compilation (7) are often used interchangeably
-  const equivalent = releaseType === 6 || releaseType === 7 ? [6, 7] : [releaseType];
+  // Anthology (6) and Compilation (7) are often used interchangeably.
+  // Album (1) also matches Live album (11) — Discogs often tags live albums as
+  // just "Album", while RED uses the more specific "Live album" category.
+  let equivalent: number[];
+  if (releaseType === 6 || releaseType === 7) equivalent = [6, 7];
+  else if (releaseType === 1) equivalent = [1, 11];
+  else equivalent = [releaseType];
 
   const matched = musicGroups.filter(
     (g) => equivalent.includes(g.releaseType) || g.releaseType === 21,

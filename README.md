@@ -84,14 +84,6 @@ xcrun devicectl device install app --device <device-id> build/Build/Products/Rel
 
 You can find your device ID with `xcrun devicectl list devices`.
 
-### Tech stack
-
-- [React Native](https://reactnative.dev/) 0.81 + [Expo](https://expo.dev/) SDK 54
-- [React Native Paper](https://callstack.github.io/react-native-paper/) (Material Design 3)
-- [expo-camera](https://docs.expo.dev/versions/latest/sdk/camera/) for barcode scanning
-- [AsyncStorage](https://react-native-async-storage.github.io/async-storage/) for local persistence
-- TypeScript
-
 ## Contributing
 
 Bug reports and feature requests are always welcome! Create them on the project's [issues page](https://github.com/frog-tools/Scout/issues). Please also feel free to open a [Pull Request](https://github.com/frog-tools/Scout/pulls) with changes.

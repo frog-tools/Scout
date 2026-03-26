@@ -13,7 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.frogtools.scout"
+      "bundleIdentifier": "app.frogtools.scout"
     },
     "plugins": [
       [
@@ -28,7 +28,7 @@
       ]
     ],
     "android": {
-      "package": "com.frogtools.scout",
+      "package": "app.frogtools.scout",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

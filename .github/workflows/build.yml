@@ -96,6 +96,11 @@ jobs:
           cp -r ios/build/Build/Products/Release-iphoneos/Scout.app Payload/
           zip -r Scout-${{ steps.version.outputs.tag }}.ipa Payload
 
+      - name: Sign IPA with fakesign
+        run: |
+          npm install -g fakesign
+          fakesign Scout-${{ steps.version.outputs.tag }}.ipa
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:

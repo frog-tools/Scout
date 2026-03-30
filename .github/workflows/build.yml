@@ -96,19 +96,19 @@ jobs:
           cp -r ios/build/Build/Products/Release-iphoneos/Scout.app Payload/
           zip -r Scout-${{ steps.version.outputs.tag }}.ipa Payload
 
-      - name: Sign IPA with fakesign
+      - name: Sign IPA with fakesigner
         run: |
-          npm install -g fakesign
-          fakesign Scout-${{ steps.version.outputs.tag }}.ipa
+          pip install fakesigner
+          fakesigner Scout-${{ steps.version.outputs.tag }}.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Scout-${{ steps.version.outputs.tag }}.ipa
-          path: Scout-${{ steps.version.outputs.tag }}.ipa
+          name: iOS-app
+          path: Scout-${{ steps.version.outputs.tag }}.ipa*
 
       - name: Attach IPA to release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "Scout-${{ steps.version.outputs.tag }}.ipa"
+        run: gh release upload "${{ github.event.release.tag_name }}" "Scout-${{ steps.version.outputs.tag }}.ipa"*

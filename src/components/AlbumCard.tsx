@@ -97,14 +97,14 @@ function AlbumCard({
           </Text>
           {!expanded && isUnofficial && (
             <View style={styles.redBadgeRow}>
-              <Chip icon="alert" compact style={{ backgroundColor: theme.dark ? '#5C2900' : '#FFE0B2' }} textStyle={styles.chipText}>
+              <Chip icon="alert" compact style={[styles.redBadgeChip, { backgroundColor: theme.dark ? '#5C2900' : '#FFE0B2' }]} textStyle={styles.chipText}>
                 Unofficial
               </Chip>
             </View>
           )}
           {!expanded && redSearching && (
             <View style={styles.redBadgeRow}>
-              <Chip icon={({ size }) => <ActivityIndicator size={size} />} compact textStyle={styles.chipText}>
+              <Chip icon={({ size }) => <ActivityIndicator size={size} />} compact style={styles.redBadgeChip} textStyle={styles.chipText}>
                 Checking RED...
               </Chip>
             </View>
@@ -114,18 +114,21 @@ function AlbumCard({
               <Chip
                 icon={album.redStatus.uploaded ? 'check-circle' : 'progress-upload'}
                 compact
-                style={album.redStatus.uploaded ? undefined : { backgroundColor: theme.colors.secondary }}
+                style={[
+                  styles.redBadgeChip,
+                  !album.redStatus.uploaded && { backgroundColor: theme.colors.secondary },
+                ]}
                 textStyle={styles.chipText}
               >
                 {album.redStatus.uploaded ? 'Already on RED' : 'Uploadable'}
               </Chip>
               {album.redStatus.trumpable && (
-                <Chip icon="chevron-double-up" compact style={{ backgroundColor: theme.dark ? '#4A3800' : '#FFF9C4' }} textStyle={styles.chipText}>
+                <Chip icon="chevron-double-up" compact style={[styles.redBadgeChip, { backgroundColor: theme.dark ? '#4A3800' : '#FFF9C4' }]} textStyle={styles.chipText}>
                   Trumpable
                 </Chip>
               )}
               {album.redStatus.requests[0] && (
-                <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact textStyle={styles.chipText}>
+                <Chip icon={({ size, color }) => <FontAwesome6 name="sack-dollar" size={size - 4} color={color} />} compact style={styles.redBadgeChip} textStyle={styles.chipText}>
                   {album.redStatus.requests[0].formatList} - {formatBounty(album.redStatus.requests[0].bounty)}
                 </Chip>
               )}
@@ -296,6 +299,8 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     marginLeft: 12,
   },
   expanded: {
@@ -304,8 +309,12 @@ const styles = StyleSheet.create({
   },
   redBadgeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
     marginTop: 4,
+  },
+  redBadgeChip: {
+    maxWidth: '100%',
   },
   chipText: {
     fontSize: 11,

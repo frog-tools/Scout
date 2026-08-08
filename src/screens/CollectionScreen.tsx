@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { StyleSheet, BackHandler, View, Alert } from 'react-native';
+import { StyleSheet, BackHandler, View, Alert, RefreshControl } from 'react-native';
 import { Appbar, Snackbar, useTheme } from 'react-native-paper';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
@@ -23,6 +23,7 @@ export default function CollectionScreen() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [snackbar, setSnackbar] = useState('');
   const [redLookupLoading, setRedLookupLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [redSearchingIds, setRedSearchingIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { showRedError } = useRedError();
@@ -62,9 +63,10 @@ export default function CollectionScreen() {
   }, []);
 
   const enterSelectionMode = useCallback((id: string) => {
+    if (refreshing) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     enterSelectionWithIds([id]);
-  }, [enterSelectionWithIds]);
+  }, [enterSelectionWithIds, refreshing]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -120,20 +122,16 @@ export default function CollectionScreen() {
     }
   }, [albums, enterSelectionWithIds]);
 
-  const handleLookupRed = useCallback(async () => {
+  const lookupRedStatuses = useCallback(async (albumsToCheck: Album[]) => {
     const apiKey = settings.redApiKey;
     const token = settings.discogsToken || undefined;
-    if (!apiKey) return;
+    if (!apiKey || albumsToCheck.length === 0) return { updated: 0, stopped: false };
 
-    const selected = albums.filter((a) => selectedIds.has(a.id));
-    if (selected.length === 0) return;
-
-    setRedLookupLoading(true);
-    setRedSearchingIds(new Set(selected.map((a) => a.id)));
+    setRedSearchingIds(new Set(albumsToCheck.map((a) => a.id)));
     let updated = 0;
-    let authError = false;
+    let stopped = false;
 
-    for (const album of selected) {
+    for (const album of albumsToCheck) {
       try {
         const detail = await fetchReleaseDetail(album.discogsId, token);
         if (!detail) continue;
@@ -148,12 +146,13 @@ export default function CollectionScreen() {
         if (err instanceof RedAuthError) {
           setRedSearchingIds(new Set());
           showRedError(err.title, err.message);
-          authError = true;
+          stopped = true;
           break;
         }
         if (err instanceof RedForbiddenError) {
           setRedSearchingIds(new Set());
           showRedError(err.title, err.message);
+          stopped = true;
           break;
         }
         // Continue with remaining items on other failures
@@ -166,10 +165,43 @@ export default function CollectionScreen() {
       }
     }
 
-    setRedLookupLoading(false);
-    if (!authError) {
-      setSnackbar(`Updated RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
-    }}, [albums, selectedIds, settings.redApiKey, settings.discogsToken, updateAlbum]);
+    return { updated, stopped };
+  }, [settings.redApiKey, settings.discogsToken, showRedError, updateAlbum]);
+
+  const handleLookupRed = useCallback(async () => {
+    if (refreshing) return;
+
+    const selected = albums.filter((a) => selectedIds.has(a.id));
+    if (selected.length === 0) return;
+
+    setRedLookupLoading(true);
+    try {
+      const { updated, stopped } = await lookupRedStatuses(selected);
+      if (!stopped) {
+        setSnackbar(`Updated RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
+      }
+    } finally {
+      setRedLookupLoading(false);
+    }
+  }, [albums, selectedIds, refreshing, lookupRedStatuses]);
+
+  const handleRefresh = useCallback(async () => {
+    if (selectionMode || redLookupLoading || refreshing) return;
+    if (!settings.redApiKey) {
+      setSnackbar('Add a RED API key in Settings to refresh RED statuses');
+      return;
+    }
+
+    setRefreshing(true);
+    try {
+      const { updated, stopped } = await lookupRedStatuses(albums);
+      if (!stopped) {
+        setSnackbar(`Refreshed RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [albums, selectionMode, redLookupLoading, refreshing, settings.redApiKey, lookupRedStatuses]);
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
 
@@ -234,6 +266,15 @@ export default function CollectionScreen() {
           ref={scrollRef}
           style={{ backgroundColor: theme.colors.background }}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              enabled={!selectionMode && !redLookupLoading}
+              tintColor={theme.colors.primary}
+              colors={[theme.colors.primary]}
+            />
+          }
         >
           <Sortable.Grid
             data={albums}
@@ -243,7 +284,7 @@ export default function CollectionScreen() {
             scrollableRef={scrollRef}
             customHandle
             dragActivationDelay={0}
-            sortEnabled={!selectionMode}
+            sortEnabled={!selectionMode && !refreshing}
             activeItemScale={1}
             activeItemOpacity={0.9}
             activeItemShadowOpacity={0.3}

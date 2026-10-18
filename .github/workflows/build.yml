@@ -30,6 +30,12 @@ jobs:
 
       - run: npm ci
 
+      - name: Set version from release tag
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: npm pkg set version="${TAG#v}"
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -78,6 +84,12 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - name: Set version from release tag
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: npm pkg set version="${TAG#v}"
 
       - name: Generate native project
         run: npx expo prebuild --platform ios --clean

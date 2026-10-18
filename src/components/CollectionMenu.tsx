@@ -15,7 +15,7 @@ interface Props {
   onSelectNotOnRed: () => void;
   onSelectNoRedStatus: () => void;
   hasRedApiKey: boolean;
-  hasAlbums: boolean;
+  disabled: boolean;
 }
 
 const ANIM_DURATION = 200;
@@ -26,7 +26,7 @@ export default function CollectionMenu({
   onSelectNotOnRed,
   onSelectNoRedStatus,
   hasRedApiKey,
-  hasAlbums,
+  disabled,
 }: Props) {
   const theme = useTheme();
   const [rendered, setRendered] = useState(false);
@@ -86,7 +86,7 @@ export default function CollectionMenu({
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <Appbar.Action icon="dots-vertical" onPress={open} disabled={!hasAlbums} />
+        <Appbar.Action icon="dots-vertical" onPress={open} disabled={disabled} />
       </View>
       {rendered && (
         <Portal>

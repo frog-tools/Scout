@@ -247,7 +247,7 @@ export default function CollectionScreen() {
             onSelectNotOnRed={handleSelectNotOnRed}
             onSelectNoRedStatus={handleSelectNoRedStatus}
             hasRedApiKey={!!settings.redApiKey}
-            hasAlbums={albums.length > 0}
+            disabled={albums.length === 0 || refreshing}
           />
         </Appbar.Header>
         {selectionMode && (
@@ -257,7 +257,7 @@ export default function CollectionScreen() {
               onDelete={handleDelete}
               onCancel={exitSelectionMode}
               onLookupRed={handleLookupRed}
-              redLookupLoading={redLookupLoading}
+              redLookupLoading={redLookupLoading || refreshing}
               hasRedApiKey={!!settings.redApiKey}
             />
           </View>

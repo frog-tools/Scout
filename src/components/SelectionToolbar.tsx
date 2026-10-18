@@ -21,7 +21,7 @@ export default function SelectionToolbar({
   const theme = useTheme();
 
   return (
-    <Appbar.Header style={{ backgroundColor: theme.colors.elevation.level2 }}>
+    <Appbar.Header statusBarHeight={0} style={{ backgroundColor: theme.colors.elevation.level2 }}>
       <Appbar.Action icon="close" onPress={onCancel} />
       <Appbar.Content title={`${count} selected`} />
       {hasRedApiKey && (

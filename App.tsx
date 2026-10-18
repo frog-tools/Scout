@@ -63,7 +63,7 @@ function AppContent() {
     <PaperProvider theme={theme}>
       <RedErrorProvider>
         <CollectionProvider>
-        <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.background }]} edges={['top']}>
+        <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.background }]} edges={['top', 'bottom']}>
           <TabBar
             navigationState={{ index, routes }}
             jumpTo={(key) => {

@@ -236,7 +236,7 @@ export default function CollectionScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View>
-        <Appbar.Header style={{ backgroundColor: theme.colors.elevation.level2 }}>
+        <Appbar.Header statusBarHeight={0} style={{ backgroundColor: theme.colors.elevation.level2 }}>
           <Appbar.Content title="Collection" />
           <CollectionMenu
             onSelectAll={handleSelectAll}

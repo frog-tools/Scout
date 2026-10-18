@@ -16,6 +16,8 @@ import { error } from 'console';
 
 type ScanState = 'idle' | 'looking_up' | 'disambiguate' | 'result' | 'error';
 
+const SCAN_COOLDOWN = 3000;
+
 function patchSearchResultImages(
   hit: DiscogsSearchResult,
   detail: DiscogsReleaseDetail,
@@ -39,6 +41,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const [snackbar, setSnackbar] = useState('');
   const scanLockRef = useRef(false);
   const scannedBarcodeRef = useRef('');
+  const cooldownRef = useRef({ barcode: '', until: 0 });
   const [redStatus, setRedStatus] = useState<RedStatus | null>(null);
   const [redLoading, setRedLoading] = useState(false);
   const [releaseDetail, setReleaseDetail] = useState<DiscogsReleaseDetail | null>(null);
@@ -65,8 +68,20 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
     return () => { cancelled = true; };
   }, [releaseDetail, settings.redApiKey]);
 
+  // Unlock scanning, ignoring the last barcode until it has left the frame
+  const releaseScan = useCallback(() => {
+    cooldownRef.current = { barcode: scannedBarcodeRef.current, until: Date.now() + SCAN_COOLDOWN };
+    scanLockRef.current = false;
+    setScanState('idle');
+  }, []);
+
   const handleBarcodeScanned = useCallback(
     async ({ data }: BarcodeScanningResult) => {
+      const cooldown = cooldownRef.current;
+      if (data === cooldown.barcode && Date.now() < cooldown.until) {
+        cooldown.until = Date.now() + SCAN_COOLDOWN;
+        return;
+      }
       if (scanLockRef.current) return;
       scanLockRef.current = true;
       scannedBarcodeRef.current = data;
@@ -75,8 +90,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setFrogMode(true);
         setSnackbar('Ribbit! Frog mode activated!');
-        setScanState('idle');
-        scanLockRef.current = false;
+        releaseScan();
         return;
       }
 
@@ -86,37 +100,22 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
         if (hasBarcode(data)) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           setSnackbar('This edition is already in your collection');
-          setScanState('idle');
-          scanLockRef.current = false;
+          releaseScan();
           return;
         }
 
         const token = settings.discogsToken || undefined;
         const results = await searchByBarcode(data, token);
-
-        if (results.filter((r) => r.type === 'release').length === 0) {
-          setScanState('error');
-          setSnackbar('No results found for this barcode');
-          setTimeout(() => {
-            scanLockRef.current = false;
-            setScanState('idle');
-          }, 2000);
-          return;
-        }
-
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
         const releases = results.filter((r) => r.type === 'release');
 
         if (releases.length === 0) {
           setScanState('error');
           setSnackbar('No results found for this barcode');
-          setTimeout(() => {
-            scanLockRef.current = false;
-            setScanState('idle');
-          }, 2000);
+          setTimeout(releaseScan, 2000);
           return;
         }
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         if (releases.length === 1) {
           // Single result: fetch detail and auto-select
@@ -125,10 +124,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
           if (!detail) {
             setScanState('error');
             setSnackbar('Release details unavailable');
-            setTimeout(() => {
-              scanLockRef.current = false;
-              setScanState('idle');
-            }, 2000);
+            setTimeout(releaseScan, 2000);
             return;
           }
           detail.barcode = data;
@@ -163,13 +159,10 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
       } catch {
         setScanState('error');
         setSnackbar('Failed to look up barcode. Check your connection.');
-        setTimeout(() => {
-          scanLockRef.current = false;
-          setScanState('idle');
-        }, 2000);
+        setTimeout(releaseScan, 2000);
       }
     },
-    [hasBarcode, settings.discogsToken],
+    [hasBarcode, settings.discogsToken, releaseScan],
   );
 
   const handleAdd = useCallback(() => {
@@ -197,18 +190,16 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
     setLastAdded(album);
     setResult(null);
     setReleaseDetail(null);
-    setScanState('idle');
-    scanLockRef.current = false;
+    releaseScan();
     setSnackbar(`Added "${title}" to collection`);
-  }, [result, releaseDetail, redStatus, addAlbum]);
+  }, [result, releaseDetail, redStatus, addAlbum, releaseScan]);
 
   const handleDismiss = useCallback(() => {
     setResult(null);
     setReleaseDetail(null);
     setCandidates([]);
-    setScanState('idle');
-    scanLockRef.current = false;
-  }, []);
+    releaseScan();
+  }, [releaseScan]);
 
   const selectingRef = useRef(false);
 
@@ -249,9 +240,8 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const handlePickerDismiss = useCallback(() => {
     if (selectingRef.current) return;
     setCandidates([]);
-    setScanState('idle');
-    scanLockRef.current = false;
-  }, []);
+    releaseScan();
+  }, [releaseScan]);
 
   if (!permission) {
     return (

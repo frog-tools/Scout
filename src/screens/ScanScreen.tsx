@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image, Linking, AppState } from 'react-native';
 import { Text, Button, Chip, Surface, Snackbar, ActivityIndicator, Icon, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
@@ -41,7 +41,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const { addAlbum, hasBarcode } = useCollection();
   const { settings, setFrogMode } = useSettings();
   const { showRedError } = useRedError();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [result, setResult] = useState<DiscogsSearchResult | null>(null);
   const [lastAdded, setLastAdded] = useState<Album | null>(null);
@@ -55,6 +55,14 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const [releaseDetail, setReleaseDetail] = useState<DiscogsReleaseDetail | null>(null);
   const [candidates, setCandidates] = useState<DiscogsSearchResult[]>([]);
   const [coverMap, setCoverMap] = useState<Map<number, string>>(new Map());
+
+  // Pick up a permission granted in the system settings
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') getPermission();
+    });
+    return () => sub.remove();
+  }, [getPermission]);
 
   // Fetch RED status when release detail is available
   useEffect(() => {
@@ -276,8 +284,12 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
         <Text variant="bodyLarge" style={styles.permText}>
           Camera access is needed to scan barcodes
         </Text>
-        <Button mode="contained" onPress={requestPermission} style={styles.permButton}>
-          Grant Camera Access
+        <Button
+          mode="contained"
+          onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
+          style={styles.permButton}
+        >
+          {permission.canAskAgain ? 'Grant Camera Access' : 'Open Settings'}
         </Button>
       </View>
     );

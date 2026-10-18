@@ -16,6 +16,7 @@ import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from
 type ScanState = 'idle' | 'looking_up' | 'disambiguate' | 'result' | 'error';
 
 const SCAN_COOLDOWN = 3000;
+const DUPLICATE_MESSAGE = 'This edition is already in your collection';
 
 function patchSearchResultImages(
   hit: DiscogsSearchResult,
@@ -45,6 +46,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const [result, setResult] = useState<DiscogsSearchResult | null>(null);
   const [lastAdded, setLastAdded] = useState<Album | null>(null);
   const [snackbar, setSnackbar] = useState('');
+  const [duplicateBarcode, setDuplicateBarcode] = useState<string | null>(null);
   const scanLockRef = useRef(false);
   const scannedBarcodeRef = useRef('');
   const cooldownRef = useRef({ barcode: '', until: 0 });
@@ -81,16 +83,13 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
     setScanState('idle');
   }, []);
 
-  const handleBarcodeScanned = useCallback(
-    async ({ data }: BarcodeScanningResult) => {
-      const cooldown = cooldownRef.current;
-      if (data === cooldown.barcode && Date.now() < cooldown.until) {
-        cooldown.until = Date.now() + SCAN_COOLDOWN;
-        return;
-      }
+  const lookupBarcode = useCallback(
+    async (data: string, { skipDuplicateCheck = false } = {}) => {
       if (scanLockRef.current) return;
       scanLockRef.current = true;
       scannedBarcodeRef.current = data;
+      setSnackbar((prev) => (prev === DUPLICATE_MESSAGE ? '' : prev));
+      setDuplicateBarcode(null);
 
       if (data === '682110000004') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -103,9 +102,10 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
       setScanState('looking_up');
 
       try {
-        if (hasBarcode(data)) {
+        if (!skipDuplicateCheck && hasBarcode(data)) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          setSnackbar('This edition is already in your collection');
+          setSnackbar(DUPLICATE_MESSAGE);
+          setDuplicateBarcode(data);
           releaseScan();
           return;
         }
@@ -169,6 +169,18 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
       }
     },
     [hasBarcode, settings.discogsToken, releaseScan],
+  );
+
+  const handleBarcodeScanned = useCallback(
+    ({ data }: BarcodeScanningResult) => {
+      const cooldown = cooldownRef.current;
+      if (data === cooldown.barcode && Date.now() < cooldown.until) {
+        cooldown.until = Date.now() + SCAN_COOLDOWN;
+        return;
+      }
+      lookupBarcode(data);
+    },
+    [lookupBarcode],
   );
 
   const handleAdd = useCallback(() => {
@@ -388,7 +400,20 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
         </Surface>
       )}
 
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={2500}>
+      {/* Remount for each new message so it gets its own timer */}
+      <Snackbar
+        key={duplicateBarcode ?? snackbar}
+        visible={!!snackbar}
+        onDismiss={() => {
+          setSnackbar('');
+          setDuplicateBarcode(null);
+        }}
+        duration={duplicateBarcode ? 5000 : 2500}
+        action={duplicateBarcode ? {
+          label: 'Look up anyway',
+          onPress: () => lookupBarcode(duplicateBarcode, { skipDuplicateCheck: true }),
+        } : undefined}
+      >
         {snackbar}
       </Snackbar>
     </View>

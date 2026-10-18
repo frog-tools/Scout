@@ -20,19 +20,6 @@ const routes: Route[] = [
   { key: 'settings', title: 'Settings' },
 ];
 
-const renderScene = ({ route }: { route: Route }) => {
-  switch (route.key) {
-    case 'collection':
-      return <CollectionScreen />;
-    case 'scan':
-      return <ScanScreen />;
-    case 'settings':
-      return <SettingsScreen />;
-    default:
-      return null;
-  }
-};
-
 function AppContent() {
   const layout = useWindowDimensions();
   const colorScheme = useColorScheme();
@@ -51,6 +38,19 @@ function AppContent() {
     const sub = BackHandler.addEventListener('hardwareBackPress', handleBack);
     return () => sub.remove();
   }, [handleBack]);
+
+  const renderScene = useCallback(({ route }: { route: Route }) => {
+    switch (route.key) {
+      case 'collection':
+        return <CollectionScreen />;
+      case 'scan':
+        return <ScanScreen isActive={index === 1} />;
+      case 'settings':
+        return <SettingsScreen />;
+      default:
+        return null;
+    }
+  }, [index]);
 
   const isDark =
     settings.themeMode === 'dark' ||

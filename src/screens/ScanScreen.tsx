@@ -27,7 +27,7 @@ function patchSearchResultImages(
   }
 }
 
-export default function ScanScreen() {
+export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const theme = useTheme();
   const { addAlbum, hasBarcode } = useCollection();
   const { settings, setFrogMode } = useSettings();
@@ -278,12 +278,16 @@ export default function ScanScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          barcodeScannerSettings={{ barcodeTypes: ['ean13', 'upc_a', 'upc_e'] }}
-          onBarcodeScanned={scanState === 'idle' ? handleBarcodeScanned : undefined}
-        />
+        {isActive ? (
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'upc_a', 'upc_e'] }}
+            onBarcodeScanned={scanState === 'idle' ? handleBarcodeScanned : undefined}
+          />
+        ) : (
+          <View style={styles.camera} />
+        )}
         {scanState === 'looking_up' && (
           <View style={styles.overlay}>
             <ActivityIndicator size="large" color="#fff" />

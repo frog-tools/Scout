@@ -8,6 +8,7 @@ export async function loadCollection(): Promise<Album[]> {
   const json = await AsyncStorage.getItem(COLLECTION_KEY);
   if (!json) return [];
   const albums = JSON.parse(json) as Album[];
+  if (!Array.isArray(albums)) throw new Error('Stored collection is not a list');
   // Migrate old RedStatus objects that lack the 'result' field
   for (const album of albums) {
     if (album.redStatus && !album.redStatus.result) {

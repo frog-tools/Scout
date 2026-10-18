@@ -12,6 +12,7 @@ type Action =
 interface CollectionContextValue {
   albums: Album[];
   isLoading: boolean;
+  loadError: boolean;
   addAlbum: (album: Album) => void;
   removeAlbums: (ids: string[]) => void;
   reorder: (from: number, to: number) => void;
@@ -47,6 +48,7 @@ function reducer(state: Album[], action: Action): Album[] {
 export function CollectionProvider({ children }: { children: React.ReactNode }) {
   const [albums, dispatch] = useReducer(reducer, []);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
 
@@ -55,6 +57,11 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
       dispatch({ type: 'SET_ALBUMS', payload: data });
       setIsLoading(false);
       initialized.current = true;
+    }).catch((e) => {
+      // Saving stays off so the stored collection is never overwritten
+      console.warn('Failed to load collection', e);
+      setLoadError(true);
+      setIsLoading(false);
     });
   }, []);
 
@@ -62,7 +69,7 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     if (!initialized.current) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
-      saveCollection(albums);
+      saveCollection(albums).catch((e) => console.warn('Failed to save collection', e));
     }, 300);
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
@@ -92,7 +99,7 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <CollectionContext.Provider
-      value={{ albums, isLoading, addAlbum, removeAlbums, reorder, updateAlbum, hasBarcode }}
+      value={{ albums, isLoading, loadError, addAlbum, removeAlbums, reorder, updateAlbum, hasBarcode }}
     >
       {children}
     </CollectionContext.Provider>

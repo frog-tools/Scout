@@ -17,7 +17,7 @@ import EmptyCollection from '../components/EmptyCollection';
 import type { Album } from '../types';
 
 export default function CollectionScreen() {
-  const { albums, removeAlbums, reorder, updateAlbum } = useCollection();
+  const { albums, loadError, removeAlbums, reorder, updateAlbum } = useCollection();
   const { settings } = useSettings();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -247,7 +247,7 @@ export default function CollectionScreen() {
             onSelectNotOnRed={handleSelectNotOnRed}
             onSelectNoRedStatus={handleSelectNoRedStatus}
             hasRedApiKey={!!settings.redApiKey}
-            disabled={albums.length === 0 || refreshing}
+            disabled={loadError || albums.length === 0 || refreshing}
           />
         </Appbar.Header>
         {selectionMode && (
@@ -263,8 +263,8 @@ export default function CollectionScreen() {
           </View>
         )}
       </View>
-      {albums.length === 0 ? (
-        <EmptyCollection />
+      {loadError || albums.length === 0 ? (
+        <EmptyCollection loadError={loadError} />
       ) : (
         <Animated.ScrollView
           ref={scrollRef}

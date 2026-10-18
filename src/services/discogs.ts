@@ -94,7 +94,7 @@ export async function fetchReleaseDetail(
   return {
     id: data.id,
     title: data.title ?? '',
-    year: data.year ?? null,
+    year: data.year || null,
     country: data.country ?? '',
     formats: data.formats ?? [],
     labels: (data.labels ?? []).map((l: { name: string; catno: string }) => ({
@@ -166,7 +166,7 @@ export function resolveArtistName(artists: DiscogsArtistCredit[]): string {
       parts.push(a.join);
     }
   }
-  return parts.join(' ').replace(/\s+/g, ' ').trim();
+  return parts.join(' ').replace(/\s+/g, ' ').replace(/ ,/g, ',').trim();
 }
 
 /**

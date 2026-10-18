@@ -326,16 +326,16 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
             ) : null}
             <View style={styles.resultInfo}>
               <Text variant="titleMedium" numberOfLines={2}>
-                {parseArtistTitle(result.title).title}
+                {releaseDetail?.title ?? parseArtistTitle(result.title).title}
               </Text>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                {parseArtistTitle(result.title).artist}
+                {releaseDetail?.artistDisplay ?? parseArtistTitle(result.title).artist}
               </Text>
-              {result.year && (
+              {(releaseDetail?.year ?? result.year) ? (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {result.year}
+                  {releaseDetail?.year ?? result.year}
                 </Text>
-              )}
+              ) : null}
             </View>
           </View>
           {settings.redApiKey ? (

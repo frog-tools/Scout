@@ -136,7 +136,7 @@ function AlbumCard({
           )}
           {expanded && (
             <View style={styles.expanded}>
-              {album.year != null && (
+              {!!album.year && (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                   Year: {album.year}
                 </Text>

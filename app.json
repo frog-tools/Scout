@@ -25,6 +25,12 @@
             "buildArchs": ["arm64-v8a"]
           }
         }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
       ]
     ],
     "android": {

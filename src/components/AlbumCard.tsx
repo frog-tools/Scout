@@ -136,7 +136,7 @@ function AlbumCard({
           )}
           {expanded && (
             <View style={styles.expanded}>
-              {album.year != null && (
+              {!!album.year && (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                   Year: {album.year}
                 </Text>
@@ -252,7 +252,7 @@ function AlbumCard({
         </View>
         {!selectionMode && (
           <Sortable.Handle>
-            <View style={styles.dragHandle}>
+            <View style={styles.dragHandle} accessibilityLabel="Drag to reorder">
               <Icon source="drag" size={24} color={theme.colors.onSurfaceVariant} />
             </View>
           </Sortable.Handle>

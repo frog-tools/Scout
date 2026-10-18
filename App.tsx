@@ -20,19 +20,6 @@ const routes: Route[] = [
   { key: 'settings', title: 'Settings' },
 ];
 
-const renderScene = ({ route }: { route: Route }) => {
-  switch (route.key) {
-    case 'collection':
-      return <CollectionScreen />;
-    case 'scan':
-      return <ScanScreen />;
-    case 'settings':
-      return <SettingsScreen />;
-    default:
-      return null;
-  }
-};
-
 function AppContent() {
   const layout = useWindowDimensions();
   const colorScheme = useColorScheme();
@@ -52,6 +39,19 @@ function AppContent() {
     return () => sub.remove();
   }, [handleBack]);
 
+  const renderScene = useCallback(({ route }: { route: Route }) => {
+    switch (route.key) {
+      case 'collection':
+        return <CollectionScreen />;
+      case 'scan':
+        return <ScanScreen isActive={index === 1} />;
+      case 'settings':
+        return <SettingsScreen />;
+      default:
+        return null;
+    }
+  }, [index]);
+
   const isDark =
     settings.themeMode === 'dark' ||
     (settings.themeMode === 'system' && colorScheme === 'dark');
@@ -63,7 +63,7 @@ function AppContent() {
     <PaperProvider theme={theme}>
       <RedErrorProvider>
         <CollectionProvider>
-        <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.background }]} edges={['top']}>
+        <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.background }]} edges={['top', 'bottom']}>
           <TabBar
             navigationState={{ index, routes }}
             jumpTo={(key) => {

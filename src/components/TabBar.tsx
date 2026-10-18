@@ -14,7 +14,7 @@ export default function TabBar({ navigationState, jumpTo }: TabBarProps) {
   const theme = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.elevation.level2 }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.elevation.level2 }]} accessibilityRole="tablist">
       {navigationState.routes.map((route, index) => {
         const focused = navigationState.index === index;
         return (
@@ -22,6 +22,8 @@ export default function TabBar({ navigationState, jumpTo }: TabBarProps) {
             key={route.key}
             onPress={() => jumpTo(route.key)}
             style={styles.tab}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: focused }}
           >
             <Text
               variant="labelLarge"

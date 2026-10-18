@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, BackHandler, View, Alert, RefreshControl } from 'react-native';
 import { Appbar, Snackbar, useTheme } from 'react-native-paper';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
@@ -17,13 +17,14 @@ import EmptyCollection from '../components/EmptyCollection';
 import type { Album } from '../types';
 
 export default function CollectionScreen() {
-  const { albums, removeAlbums, reorder, updateAlbum } = useCollection();
+  const { albums, loadError, removeAlbums, reorder, updateAlbum } = useCollection();
   const { settings } = useSettings();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [snackbar, setSnackbar] = useState('');
   const [redLookupLoading, setRedLookupLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
   const [redSearchingIds, setRedSearchingIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { showRedError } = useRedError();
@@ -62,11 +63,12 @@ export default function CollectionScreen() {
     return true;
   }, []);
 
+  // AlbumCard's memo can keep an old onLongPress, so read refreshing from a ref
   const enterSelectionMode = useCallback((id: string) => {
-    if (refreshing) return;
+    if (refreshingRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     enterSelectionWithIds([id]);
-  }, [enterSelectionWithIds, refreshing]);
+  }, [enterSelectionWithIds]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -193,12 +195,14 @@ export default function CollectionScreen() {
     }
 
     setRefreshing(true);
+    refreshingRef.current = true;
     try {
       const { updated, stopped } = await lookupRedStatuses(albums);
       if (!stopped) {
         setSnackbar(`Refreshed RED status for ${updated} item${updated !== 1 ? 's' : ''}`);
       }
     } finally {
+      refreshingRef.current = false;
       setRefreshing(false);
     }
   }, [albums, selectionMode, redLookupLoading, refreshing, settings.redApiKey, lookupRedStatuses]);
@@ -236,14 +240,14 @@ export default function CollectionScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View>
-        <Appbar.Header style={{ backgroundColor: theme.colors.elevation.level2 }}>
+        <Appbar.Header statusBarHeight={0} style={{ backgroundColor: theme.colors.elevation.level2 }}>
           <Appbar.Content title="Collection" />
           <CollectionMenu
             onSelectAll={handleSelectAll}
             onSelectNotOnRed={handleSelectNotOnRed}
             onSelectNoRedStatus={handleSelectNoRedStatus}
             hasRedApiKey={!!settings.redApiKey}
-            hasAlbums={albums.length > 0}
+            disabled={loadError || albums.length === 0 || refreshing}
           />
         </Appbar.Header>
         {selectionMode && (
@@ -253,14 +257,14 @@ export default function CollectionScreen() {
               onDelete={handleDelete}
               onCancel={exitSelectionMode}
               onLookupRed={handleLookupRed}
-              redLookupLoading={redLookupLoading}
+              redLookupLoading={redLookupLoading || refreshing}
               hasRedApiKey={!!settings.redApiKey}
             />
           </View>
         )}
       </View>
-      {albums.length === 0 ? (
-        <EmptyCollection />
+      {loadError || albums.length === 0 ? (
+        <EmptyCollection loadError={loadError} />
       ) : (
         <Animated.ScrollView
           ref={scrollRef}

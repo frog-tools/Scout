@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image, Linking, AppState } from 'react-native';
 import { Text, Button, Chip, Surface, Snackbar, ActivityIndicator, Icon, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
@@ -8,13 +8,15 @@ import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
 import { useRedError } from '../context/RedErrorContext';
-import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImages } from '../services/discogs';
+import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImages, DiscogsError } from '../services/discogs';
 import { getRedStatus, RedAuthError, RedForbiddenError } from '../services/redacted';
 import ReleasePicker from '../components/ReleasePicker';
 import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from '../types';
-import { error } from 'console';
 
 type ScanState = 'idle' | 'looking_up' | 'disambiguate' | 'result' | 'error';
+
+const SCAN_COOLDOWN = 3000;
+const DUPLICATE_MESSAGE = 'This edition is already in your collection';
 
 function patchSearchResultImages(
   hit: DiscogsSearchResult,
@@ -27,23 +29,40 @@ function patchSearchResultImages(
   }
 }
 
-export default function ScanScreen() {
+function discogsErrorMessage(err: unknown, fallback: string): string {
+  if (!(err instanceof DiscogsError)) return fallback;
+  if (err.status === 401) return 'Discogs rejected the request. Check your Discogs token in Settings.';
+  if (err.status === 429) return 'Discogs rate limit reached. Try again shortly.';
+  return fallback;
+}
+
+export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const theme = useTheme();
   const { addAlbum, hasBarcode } = useCollection();
   const { settings, setFrogMode } = useSettings();
   const { showRedError } = useRedError();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [result, setResult] = useState<DiscogsSearchResult | null>(null);
   const [lastAdded, setLastAdded] = useState<Album | null>(null);
   const [snackbar, setSnackbar] = useState('');
+  const [duplicateBarcode, setDuplicateBarcode] = useState<string | null>(null);
   const scanLockRef = useRef(false);
   const scannedBarcodeRef = useRef('');
+  const cooldownRef = useRef({ barcode: '', until: 0 });
   const [redStatus, setRedStatus] = useState<RedStatus | null>(null);
   const [redLoading, setRedLoading] = useState(false);
   const [releaseDetail, setReleaseDetail] = useState<DiscogsReleaseDetail | null>(null);
   const [candidates, setCandidates] = useState<DiscogsSearchResult[]>([]);
   const [coverMap, setCoverMap] = useState<Map<number, string>>(new Map());
+
+  // Pick up a permission granted in the system settings
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') getPermission();
+    });
+    return () => sub.remove();
+  }, [getPermission]);
 
   // Fetch RED status when release detail is available
   useEffect(() => {
@@ -65,58 +84,52 @@ export default function ScanScreen() {
     return () => { cancelled = true; };
   }, [releaseDetail, settings.redApiKey]);
 
-  const handleBarcodeScanned = useCallback(
-    async ({ data }: BarcodeScanningResult) => {
+  // Unlock scanning, ignoring the last barcode until it has left the frame
+  const releaseScan = useCallback(() => {
+    cooldownRef.current = { barcode: scannedBarcodeRef.current, until: Date.now() + SCAN_COOLDOWN };
+    scanLockRef.current = false;
+    setScanState('idle');
+  }, []);
+
+  const lookupBarcode = useCallback(
+    async (data: string, { skipDuplicateCheck = false } = {}) => {
       if (scanLockRef.current) return;
       scanLockRef.current = true;
       scannedBarcodeRef.current = data;
+      setSnackbar((prev) => (prev === DUPLICATE_MESSAGE ? '' : prev));
+      setDuplicateBarcode(null);
 
       if (data === '682110000004') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setFrogMode(true);
         setSnackbar('Ribbit! Frog mode activated!');
-        setScanState('idle');
-        scanLockRef.current = false;
+        releaseScan();
         return;
       }
 
       setScanState('looking_up');
 
       try {
-        if (hasBarcode(data)) {
+        if (!skipDuplicateCheck && hasBarcode(data)) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          setSnackbar('This edition is already in your collection');
-          setScanState('idle');
-          scanLockRef.current = false;
+          setSnackbar(DUPLICATE_MESSAGE);
+          setDuplicateBarcode(data);
+          releaseScan();
           return;
         }
 
         const token = settings.discogsToken || undefined;
         const results = await searchByBarcode(data, token);
-
-        if (results.filter((r) => r.type === 'release').length === 0) {
-          setScanState('error');
-          setSnackbar('No results found for this barcode');
-          setTimeout(() => {
-            scanLockRef.current = false;
-            setScanState('idle');
-          }, 2000);
-          return;
-        }
-
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
         const releases = results.filter((r) => r.type === 'release');
 
         if (releases.length === 0) {
           setScanState('error');
           setSnackbar('No results found for this barcode');
-          setTimeout(() => {
-            scanLockRef.current = false;
-            setScanState('idle');
-          }, 2000);
+          setTimeout(releaseScan, 2000);
           return;
         }
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         if (releases.length === 1) {
           // Single result: fetch detail and auto-select
@@ -125,10 +138,7 @@ export default function ScanScreen() {
           if (!detail) {
             setScanState('error');
             setSnackbar('Release details unavailable');
-            setTimeout(() => {
-              scanLockRef.current = false;
-              setScanState('idle');
-            }, 2000);
+            setTimeout(releaseScan, 2000);
             return;
           }
           detail.barcode = data;
@@ -160,16 +170,25 @@ export default function ScanScreen() {
               .catch(() => {});
           }
         }
-      } catch {
+      } catch (err) {
         setScanState('error');
-        setSnackbar('Failed to look up barcode. Check your connection.');
-        setTimeout(() => {
-          scanLockRef.current = false;
-          setScanState('idle');
-        }, 2000);
+        setSnackbar(discogsErrorMessage(err, 'Failed to look up barcode. Check your connection.'));
+        setTimeout(releaseScan, 2000);
       }
     },
-    [hasBarcode, settings.discogsToken],
+    [hasBarcode, settings.discogsToken, releaseScan],
+  );
+
+  const handleBarcodeScanned = useCallback(
+    ({ data }: BarcodeScanningResult) => {
+      const cooldown = cooldownRef.current;
+      if (data === cooldown.barcode && Date.now() < cooldown.until) {
+        cooldown.until = Date.now() + SCAN_COOLDOWN;
+        return;
+      }
+      lookupBarcode(data);
+    },
+    [lookupBarcode],
   );
 
   const handleAdd = useCallback(() => {
@@ -197,23 +216,21 @@ export default function ScanScreen() {
     setLastAdded(album);
     setResult(null);
     setReleaseDetail(null);
-    setScanState('idle');
-    scanLockRef.current = false;
+    releaseScan();
     setSnackbar(`Added "${title}" to collection`);
-  }, [result, releaseDetail, redStatus, addAlbum]);
+  }, [result, releaseDetail, redStatus, addAlbum, releaseScan]);
 
   const handleDismiss = useCallback(() => {
     setResult(null);
     setReleaseDetail(null);
     setCandidates([]);
-    setScanState('idle');
-    scanLockRef.current = false;
-  }, []);
+    releaseScan();
+  }, [releaseScan]);
 
   const selectingRef = useRef(false);
 
   const [pickerLoading, setPickerLoading] = useState(false);
-  const [pickerError, setPickerError] = useState<{ id: number; message: string } | null>(null);
+  const [pickerError, setPickerError] = useState<{ id: number; message: string; removable: boolean } | null>(null);
 
   const handleSelectRelease = useCallback(async (selected: DiscogsSearchResult) => {
     selectingRef.current = true;
@@ -222,7 +239,7 @@ export default function ScanScreen() {
       const token = settings.discogsToken || undefined;
       const detail = await fetchReleaseDetail(selected.id, token);
       if (!detail) {
-        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing. This is usually due to an issue with Discogs. Please select another pressing.' });
+        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing. This is usually due to an issue with Discogs. Please select another pressing.', removable: true });
         return;
       }
       detail.barcode = scannedBarcodeRef.current;
@@ -231,8 +248,8 @@ export default function ScanScreen() {
       setReleaseDetail(detail);
       setCandidates([]);
       setScanState('result');
-    } catch {
-      setPickerError({ id: selected.id, message: 'Failed to fetch release details. This may be a network issue.' });
+    } catch (err) {
+      setPickerError({ id: selected.id, message: discogsErrorMessage(err, 'Failed to fetch release details. This may be a network issue.'), removable: false });
     } finally {
       selectingRef.current = false;
       setPickerLoading(false);
@@ -240,7 +257,7 @@ export default function ScanScreen() {
   }, [settings.discogsToken]);
 
   const handlePickerErrorDismiss = useCallback(() => {
-    if (pickerError) {
+    if (pickerError?.removable) {
       setCandidates((prev) => prev.filter((c) => c.id !== pickerError.id));
     }
     setPickerError(null);
@@ -249,9 +266,8 @@ export default function ScanScreen() {
   const handlePickerDismiss = useCallback(() => {
     if (selectingRef.current) return;
     setCandidates([]);
-    setScanState('idle');
-    scanLockRef.current = false;
-  }, []);
+    releaseScan();
+  }, [releaseScan]);
 
   if (!permission) {
     return (
@@ -268,8 +284,12 @@ export default function ScanScreen() {
         <Text variant="bodyLarge" style={styles.permText}>
           Camera access is needed to scan barcodes
         </Text>
-        <Button mode="contained" onPress={requestPermission} style={styles.permButton}>
-          Grant Camera Access
+        <Button
+          mode="contained"
+          onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
+          style={styles.permButton}
+        >
+          {permission.canAskAgain ? 'Grant Camera Access' : 'Open Settings'}
         </Button>
       </View>
     );
@@ -278,12 +298,16 @@ export default function ScanScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          barcodeScannerSettings={{ barcodeTypes: ['ean13', 'upc_a', 'upc_e'] }}
-          onBarcodeScanned={scanState === 'idle' ? handleBarcodeScanned : undefined}
-        />
+        {isActive ? (
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'upc_a', 'upc_e'] }}
+            onBarcodeScanned={scanState === 'idle' ? handleBarcodeScanned : undefined}
+          />
+        ) : (
+          <View style={styles.camera} />
+        )}
         {scanState === 'looking_up' && (
           <View style={styles.overlay}>
             <ActivityIndicator size="large" color="#fff" />
@@ -302,16 +326,16 @@ export default function ScanScreen() {
             ) : null}
             <View style={styles.resultInfo}>
               <Text variant="titleMedium" numberOfLines={2}>
-                {parseArtistTitle(result.title).title}
+                {releaseDetail?.title ?? parseArtistTitle(result.title).title}
               </Text>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                {parseArtistTitle(result.title).artist}
+                {releaseDetail?.artistDisplay ?? parseArtistTitle(result.title).artist}
               </Text>
-              {result.year && (
+              {(releaseDetail?.year ?? result.year) ? (
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {result.year}
+                  {releaseDetail?.year ?? result.year}
                 </Text>
-              )}
+              ) : null}
             </View>
           </View>
           {settings.redApiKey ? (
@@ -364,6 +388,7 @@ export default function ScanScreen() {
         coverMap={coverMap}
         loading={pickerLoading}
         error={pickerError?.message ?? null}
+        errorRemovable={!!pickerError?.removable}
         onSelect={handleSelectRelease}
         onDismiss={handlePickerDismiss}
         onErrorDismiss={handlePickerErrorDismiss}
@@ -387,7 +412,20 @@ export default function ScanScreen() {
         </Surface>
       )}
 
-      <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={2500}>
+      {/* Remount for each new message so it gets its own timer */}
+      <Snackbar
+        key={duplicateBarcode ?? snackbar}
+        visible={!!snackbar}
+        onDismiss={() => {
+          setSnackbar('');
+          setDuplicateBarcode(null);
+        }}
+        duration={duplicateBarcode ? 5000 : 2500}
+        action={duplicateBarcode ? {
+          label: 'Look up anyway',
+          onPress: () => lookupBarcode(duplicateBarcode, { skipDuplicateCheck: true }),
+        } : undefined}
+      >
         {snackbar}
       </Snackbar>
     </View>

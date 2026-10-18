@@ -2,7 +2,6 @@
   "expo": {
     "name": "Scout",
     "slug": "Scout",
-    "version": "0.2.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

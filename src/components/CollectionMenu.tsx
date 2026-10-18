@@ -86,7 +86,7 @@ export default function CollectionMenu({
   return (
     <>
       <View ref={anchorRef} collapsable={false}>
-        <Appbar.Action icon="dots-vertical" onPress={open} disabled={disabled} />
+        <Appbar.Action icon="dots-vertical" onPress={open} disabled={disabled} accessibilityLabel="More options" />
       </View>
       {rendered && (
         <Portal>

@@ -22,7 +22,7 @@ export default function SelectionToolbar({
 
   return (
     <Appbar.Header statusBarHeight={0} style={{ backgroundColor: theme.colors.elevation.level2 }}>
-      <Appbar.Action icon="close" onPress={onCancel} />
+      <Appbar.Action icon="close" onPress={onCancel} accessibilityLabel="Cancel selection" />
       <Appbar.Content title={`${count} selected`} />
       {hasRedApiKey && (
         <Button

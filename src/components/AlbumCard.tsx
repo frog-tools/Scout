@@ -252,7 +252,7 @@ function AlbumCard({
         </View>
         {!selectionMode && (
           <Sortable.Handle>
-            <View style={styles.dragHandle}>
+            <View style={styles.dragHandle} accessibilityLabel="Drag to reorder">
               <Icon source="drag" size={24} color={theme.colors.onSurfaceVariant} />
             </View>
           </Sortable.Handle>

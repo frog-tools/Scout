@@ -16,6 +16,15 @@ function headers(token?: string): HeadersInit {
   return h;
 }
 
+export class DiscogsError extends Error {
+  constructor(status: number) {
+    super(`Discogs API error: ${status}`);
+    this.name = 'DiscogsError';
+    this.status = status;
+  }
+  status: number;
+}
+
 // -- Existing functions ---------------------------------------------
 
 export async function searchByBarcode(
@@ -24,7 +33,7 @@ export async function searchByBarcode(
 ): Promise<DiscogsSearchResult[]> {
   const url = `${BASE_URL}/database/search?barcode=${encodeURIComponent(barcode)}&type=release`;
   const res = await fetch(url, { headers: headers(token) });
-  if (!res.ok) throw new Error(`Discogs API error: ${res.status}`);
+  if (!res.ok) throw new DiscogsError(res.status);
   const data: DiscogsSearchResponse = await res.json();
   return data.results;
 }
@@ -68,6 +77,7 @@ export function stripDiscogsDisambiguator(name: string): string {
 /**
  * Fetch full release details from Discogs.
  * Returns null if the release 404s (used as step 2 validation).
+ * Throws DiscogsError on rate limiting and server errors.
  */
 export async function fetchReleaseDetail(
   releaseId: number,
@@ -75,6 +85,7 @@ export async function fetchReleaseDetail(
 ): Promise<DiscogsReleaseDetail | null> {
   const url = `${BASE_URL}/releases/${releaseId}`;
   const res = await fetch(url, { headers: headers(token) });
+  if (res.status === 429 || res.status >= 500) throw new DiscogsError(res.status);
   if (!res.ok) return null;
 
   const data = await res.json();

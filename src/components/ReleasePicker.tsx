@@ -10,6 +10,7 @@ interface ReleasePickerProps {
   coverMap: Map<number, string>;
   loading?: boolean;
   error: string | null;
+  errorRemovable: boolean;
   onErrorDismiss: () => void;
   onSelect: (result: DiscogsSearchResult) => void;
   onDismiss: () => void;
@@ -56,6 +57,7 @@ export default function ReleasePicker({
   coverMap,
   loading,
   error,
+  errorRemovable,
   onErrorDismiss,
   onSelect,
   onDismiss,
@@ -244,7 +246,7 @@ export default function ReleasePicker({
           <Text variant="bodyMedium">{error}</Text>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button onPress={onErrorDismiss}>Remove from results</Button>
+          <Button onPress={onErrorDismiss}>{errorRemovable ? 'Remove from results' : 'OK'}</Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>

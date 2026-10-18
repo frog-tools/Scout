@@ -8,11 +8,10 @@ import * as Crypto from 'expo-crypto';
 import { useCollection } from '../context/CollectionContext';
 import { useSettings } from '../context/SettingsContext';
 import { useRedError } from '../context/RedErrorContext';
-import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImages } from '../services/discogs';
+import { searchByBarcode, parseArtistTitle, fetchReleaseDetail, fetchReleaseImages, DiscogsError } from '../services/discogs';
 import { getRedStatus, RedAuthError, RedForbiddenError } from '../services/redacted';
 import ReleasePicker from '../components/ReleasePicker';
 import type { Album, DiscogsSearchResult, DiscogsReleaseDetail, RedStatus } from '../types';
-import { error } from 'console';
 
 type ScanState = 'idle' | 'looking_up' | 'disambiguate' | 'result' | 'error';
 
@@ -27,6 +26,13 @@ function patchSearchResultImages(
     hit.thumb = primary?.uri150 ?? '';
     hit.cover_image = primary?.uri ?? '';
   }
+}
+
+function discogsErrorMessage(err: unknown, fallback: string): string {
+  if (!(err instanceof DiscogsError)) return fallback;
+  if (err.status === 401) return 'Discogs rejected the request. Check your Discogs token in Settings.';
+  if (err.status === 429) return 'Discogs rate limit reached. Try again shortly.';
+  return fallback;
 }
 
 export default function ScanScreen({ isActive }: { isActive: boolean }) {
@@ -156,9 +162,9 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
               .catch(() => {});
           }
         }
-      } catch {
+      } catch (err) {
         setScanState('error');
-        setSnackbar('Failed to look up barcode. Check your connection.');
+        setSnackbar(discogsErrorMessage(err, 'Failed to look up barcode. Check your connection.'));
         setTimeout(releaseScan, 2000);
       }
     },
@@ -204,7 +210,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   const selectingRef = useRef(false);
 
   const [pickerLoading, setPickerLoading] = useState(false);
-  const [pickerError, setPickerError] = useState<{ id: number; message: string } | null>(null);
+  const [pickerError, setPickerError] = useState<{ id: number; message: string; removable: boolean } | null>(null);
 
   const handleSelectRelease = useCallback(async (selected: DiscogsSearchResult) => {
     selectingRef.current = true;
@@ -213,7 +219,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
       const token = settings.discogsToken || undefined;
       const detail = await fetchReleaseDetail(selected.id, token);
       if (!detail) {
-        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing. This is usually due to an issue with Discogs. Please select another pressing.' });
+        setPickerError({ id: selected.id, message: 'Release details are unavailable on Discogs for this pressing. This is usually due to an issue with Discogs. Please select another pressing.', removable: true });
         return;
       }
       detail.barcode = scannedBarcodeRef.current;
@@ -222,8 +228,8 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
       setReleaseDetail(detail);
       setCandidates([]);
       setScanState('result');
-    } catch {
-      setPickerError({ id: selected.id, message: 'Failed to fetch release details. This may be a network issue.' });
+    } catch (err) {
+      setPickerError({ id: selected.id, message: discogsErrorMessage(err, 'Failed to fetch release details. This may be a network issue.'), removable: false });
     } finally {
       selectingRef.current = false;
       setPickerLoading(false);
@@ -231,7 +237,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
   }, [settings.discogsToken]);
 
   const handlePickerErrorDismiss = useCallback(() => {
-    if (pickerError) {
+    if (pickerError?.removable) {
       setCandidates((prev) => prev.filter((c) => c.id !== pickerError.id));
     }
     setPickerError(null);
@@ -358,6 +364,7 @@ export default function ScanScreen({ isActive }: { isActive: boolean }) {
         coverMap={coverMap}
         loading={pickerLoading}
         error={pickerError?.message ?? null}
+        errorRemovable={!!pickerError?.removable}
         onSelect={handleSelectRelease}
         onDismiss={handlePickerDismiss}
         onErrorDismiss={handlePickerErrorDismiss}

@@ -5,6 +5,7 @@ import { loadCollection, saveCollection } from '../services/storage';
 type Action =
   | { type: 'SET_ALBUMS'; payload: Album[] }
   | { type: 'ADD_ALBUM'; payload: Album }
+  | { type: 'APPEND_ALBUMS'; payload: Album[] }
   | { type: 'REMOVE_ALBUMS'; payload: string[] }
   | { type: 'REORDER'; payload: { from: number; to: number } }
   | { type: 'UPDATE_ALBUM'; payload: { id: string; changes: Partial<Album> } };
@@ -13,6 +14,7 @@ interface CollectionContextValue {
   albums: Album[];
   isLoading: boolean;
   addAlbum: (album: Album) => void;
+  importAlbums: (albums: Album[]) => number;
   removeAlbums: (ids: string[]) => void;
   reorder: (from: number, to: number) => void;
   updateAlbum: (id: string, changes: Partial<Album>) => void;
@@ -27,6 +29,8 @@ function reducer(state: Album[], action: Action): Album[] {
       return action.payload;
     case 'ADD_ALBUM':
       return [action.payload, ...state];
+    case 'APPEND_ALBUMS':
+      return [...state, ...action.payload];
     case 'REMOVE_ALBUMS': {
       const ids = new Set(action.payload);
       return state.filter((a) => !ids.has(a.id));
@@ -73,6 +77,20 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
     dispatch({ type: 'ADD_ALBUM', payload: album });
   }, []);
 
+  // Skips releases already in the collection, matching the scan duplicate check
+  const importAlbums = useCallback((imported: Album[]) => {
+    const ids = new Set(albums.map((a) => a.id));
+    const barcodes = new Set(albums.map((a) => a.barcode));
+    const added = imported.filter((a) => {
+      if (ids.has(a.id) || barcodes.has(a.barcode)) return false;
+      ids.add(a.id);
+      barcodes.add(a.barcode);
+      return true;
+    });
+    dispatch({ type: 'APPEND_ALBUMS', payload: added });
+    return added.length;
+  }, [albums]);
+
   const removeAlbums = useCallback((ids: string[]) => {
     dispatch({ type: 'REMOVE_ALBUMS', payload: ids });
   }, []);
@@ -92,7 +110,7 @@ export function CollectionProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <CollectionContext.Provider
-      value={{ albums, isLoading, addAlbum, removeAlbums, reorder, updateAlbum, hasBarcode }}
+      value={{ albums, isLoading, addAlbum, importAlbums, removeAlbums, reorder, updateAlbum, hasBarcode }}
     >
       {children}
     </CollectionContext.Provider>

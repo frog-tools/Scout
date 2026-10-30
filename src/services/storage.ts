@@ -3,11 +3,15 @@ import type { Album, Settings } from '../types';
 
 const COLLECTION_KEY = 'scout_collection';
 const SETTINGS_KEY = 'scout_settings';
+const EXPORT_VERSION = 1;
 
 export async function loadCollection(): Promise<Album[]> {
   const json = await AsyncStorage.getItem(COLLECTION_KEY);
   if (!json) return [];
-  const albums = JSON.parse(json) as Album[];
+  return migrateAlbums(JSON.parse(json) as Album[]);
+}
+
+function migrateAlbums(albums: Album[]): Album[] {
   // Migrate old RedStatus objects that lack the 'result' field
   for (const album of albums) {
     if (album.redStatus && !album.redStatus.result) {
@@ -29,4 +33,34 @@ export async function loadSettings(): Promise<Settings> {
 
 export async function saveSettings(settings: Settings): Promise<void> {
   await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+export function exportCollection(albums: Album[]): string {
+  return JSON.stringify({ app: 'scout', version: EXPORT_VERSION, exportedAt: Date.now(), albums }, null, 2);
+}
+
+export function parseCollectionExport(json: string): Album[] {
+  let data;
+  try {
+    data = JSON.parse(json);
+  } catch {
+    throw new Error('This file is not a Scout export');
+  }
+  if (data?.app !== 'scout' || !Array.isArray(data.albums)) {
+    throw new Error('This file is not a Scout export');
+  }
+  if (data.version > EXPORT_VERSION) {
+    throw new Error('This export is from a newer version of Scout');
+  }
+  return migrateAlbums(data.albums.filter(isAlbum));
+}
+
+function isAlbum(a: any): a is Album {
+  return typeof a?.id === 'string'
+    && typeof a.discogsId === 'number'
+    && typeof a.title === 'string'
+    && typeof a.artist === 'string'
+    && typeof a.barcode === 'string'
+    && Array.isArray(a.format)
+    && Array.isArray(a.genre);
 }

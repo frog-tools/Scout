@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, ScrollView, Linking } from 'react-native';
-import { Text, TextInput, List, Divider, RadioButton, Portal, Dialog, Button, useTheme } from 'react-native-paper';
+import { Text, TextInput, List, Divider, RadioButton, Portal, Dialog, Button, Snackbar, useTheme } from 'react-native-paper';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { Directory, File } from 'expo-file-system';
 import { version as appVersion } from '../../package.json';
 import { useSettings } from '../context/SettingsContext';
 import { useCollection } from '../context/CollectionContext';
+import { exportCollection, parseCollectionExport } from '../services/storage';
 import type { ThemeMode } from '../types';
 
 const appIcon = require('../../assets/play-store-icon.png');
@@ -12,8 +14,38 @@ const appIcon = require('../../assets/play-store-icon.png');
 export default function SettingsScreen() {
   const theme = useTheme();
   const { settings, updateToken, updateThemeMode, updateRedApiKey, setFrogMode } = useSettings();
-  const { albums } = useCollection();
+  const { albums, importAlbums } = useCollection();
   const [aboutVisible, setAboutVisible] = useState(false);
+  const [snackbar, setSnackbar] = useState('');
+
+  const handleExport = async () => {
+    try {
+      const directory = await Directory.pickDirectoryAsync();
+      const date = new Date().toISOString().slice(0, 10);
+      const file = directory.createFile(`scout-collection-${date}.json`, 'application/json');
+      file.write(exportCollection(albums));
+      setSnackbar(`Exported ${albums.length} release${albums.length !== 1 ? 's' : ''}`);
+    } catch (e) {
+      if (!isPickerCancelled(e)) setSnackbar('Couldn\'t save the export');
+    }
+  };
+
+  const handleImport = async () => {
+    let json: string;
+    try {
+      const picked = await File.pickFileAsync();
+      json = await (Array.isArray(picked) ? picked[0] : picked).text();
+    } catch (e) {
+      if (!isPickerCancelled(e)) setSnackbar('Couldn\'t read the file');
+      return;
+    }
+    try {
+      const added = importAlbums(parseCollectionExport(json));
+      setSnackbar(`Imported ${added} release${added !== 1 ? 's' : ''}`);
+    } catch (e) {
+      setSnackbar((e as Error).message);
+    }
+  };
 
   return (
     <ScrollView
@@ -115,6 +147,24 @@ export default function SettingsScreen() {
       )}
 
       <List.Section>
+        <List.Subheader>Backup</List.Subheader>
+        <List.Item
+          title="Export collection"
+          description="Save your collection to a file in a folder you choose, such as Documents"
+          left={(props) => <List.Icon {...props} icon="export" />}
+          onPress={handleExport}
+        />
+        <List.Item
+          title="Import collection"
+          description="Add releases from an export. Releases already in your collection are skipped."
+          left={(props) => <List.Icon {...props} icon="import" />}
+          onPress={handleImport}
+        />
+      </List.Section>
+
+      <Divider />
+
+      <List.Section>
         <List.Subheader>About</List.Subheader>
         <List.Item
           title="Version"
@@ -161,9 +211,17 @@ export default function SettingsScreen() {
             <Button onPress={() => setAboutVisible(false)}>Close</Button>
           </Dialog.Actions>
         </Dialog>
+        <Snackbar visible={!!snackbar} onDismiss={() => setSnackbar('')} duration={2500}>
+          {snackbar}
+        </Snackbar>
       </Portal>
     </ScrollView>
   );
+}
+
+function isPickerCancelled(e: unknown): boolean {
+  // ERR_PICKER_CANCELLED on Android, ERR_FILE_PICKING_CANCELLED on iOS
+  return /CANCELLED$/.test((e as { code?: string })?.code ?? '');
 }
 
 const styles = StyleSheet.create({
